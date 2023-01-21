@@ -17,7 +17,7 @@ void runDerivative(std::string input_image_path, std::string output_image_path) 
 
     // Run derivative function 
     cv::Mat derivative;
-    cv::Sobel(image, derivative, CV_8U, 1, 1, 1, 40);
+    cv::Sobel(image, derivative, CV_8U, 1, 1, 1, 255);
 
     // Save the derivative image 
     cv::imwrite(output_image_path, derivative);
@@ -62,7 +62,7 @@ void removeBlackClusters(std::string input_image_path, std::string output_image_
     cv::imwrite(output_image_path, result);
 }
 
-void findCorners(std::string input_image_path, std::string output_image_path, double min_angle, double max_angle) {
+void findCorners(std::string input_image_path, std::string output_image_path) {
     // Load the image
     cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
 
@@ -74,7 +74,7 @@ void findCorners(std::string input_image_path, std::string output_image_path, do
 
     // Find the corners in the binary image
     std::vector<cv::Point2f> corners;
-    cv::goodFeaturesToTrack(binary, corners, 4, 0.1, 100, cv::Mat(), 25, true);
+    cv::goodFeaturesToTrack(binary, corners, 4, 0.01, 400, cv::Mat(), 30, true);
 
     // Create an image for drawing the corners
     cv::Mat corner_image = cv::Mat::zeros(binary.size(), CV_8UC3);
@@ -99,7 +99,7 @@ void removeRuggedEdges(std::string input_image_path, std::string output_image_pa
     cv::threshold(image, result, 128, 255, cv::THRESH_BINARY);
 
     // Remove rugged edges by dilating and eroding the image
-    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(10, 10));
+    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(15, 15));
     cv::dilate(result, result, kernel);
     cv::erode(result, result, kernel);
 
@@ -107,35 +107,37 @@ void removeRuggedEdges(std::string input_image_path, std::string output_image_pa
     cv::imwrite(output_image_path, result);
 }
 
-
 int main() {
     std::cout << " |#     |  0% \r";
-    std::string input_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image.jpg";
-    std::string output_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image.bmp";
-    Jpgpreprocesor(input_image_path, output_image_path);
-    std::cout << " |##    |  20% \r";
-    int threshold = 120;
-    std::string output_binary_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_binary.bmp";
-    convertToBinaryBitmap(output_image_path, output_binary_image_path, threshold);
-    std::cout << " |###   |  40% \r";
-    std::string output_filtered_binary_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_Filtered_binary.bmp";
-    int cluster_size = 100;
-    removeBlackClusters(output_binary_image_path, output_filtered_binary_image_path, cluster_size);
-    std::cout << " |####  |  60% \r";
-    std::string output_soft_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_soft.bmp";
-    removeRuggedEdges(output_filtered_binary_image_path, output_soft_image_path);
-    std::string output_derivative_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_Derative.bmp";
-    runDerivative(output_soft_image_path, output_derivative_image_path);
-    std::cout << " |##### |  80% \r";
-    std::cout << " |##### |  90% \r";
-    std::string output_line_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_Line.bmp";
-    int min_angle = 80;
-    int max_angle = 100;
-    findCorners(output_soft_image_path, output_line_image_path, min_angle, max_angle);
-    std::cout << " |######|  99% ";
-    int number_of_points = 10000;
-   // std::string output_point_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_Point.bmp";
-    //make(output_derivative_image_path, output_point_image_path, number_of_points);
-    std::cout << " |######|  100% ";
+    for (int number = 0; number < 1; number++) {
+        std::string input_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image" + number;
+        input_image_path += ".jpg";
+        std::string output_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_0"+ number;
+        output_image_path += ".bmp";
+        Jpgpreprocesor(input_image_path, output_image_path);
+        std::cout << " |##    |  20% \r";
+        int threshold = 120;
+        std::string output_binary_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_1"+ number;
+        output_binary_image_path += ".bmp";
+        convertToBinaryBitmap(output_image_path, output_binary_image_path, threshold);
+        std::cout << " |###   |  40% \r";
+        std::string output_filtered_binary_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_2"+ number;
+        output_filtered_binary_image_path += ".bmp";
+        int cluster_size = 100;
+        removeBlackClusters(output_binary_image_path, output_filtered_binary_image_path, cluster_size);
+        std::cout << " |####  |  60% \r";
+        std::string output_soft_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_3"+ number;
+        output_soft_image_path += ".bmp";
+        removeRuggedEdges(output_filtered_binary_image_path, output_soft_image_path);
+        std::cout << " |##### |  80% \r";
+        std::string output_derivative_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_4"+ number;
+        output_derivative_image_path += ".bmp";
+        runDerivative(output_soft_image_path, output_derivative_image_path);
+        std::cout << " |##### |  90% \r";
+        std::string output_line_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\Test_Image_5"+ number;
+        output_line_image_path += ".bmp";
+        findCorners(output_soft_image_path, output_line_image_path);
+        std::cout << " |##### |  100% ";
+    }
     return 0;
 }
