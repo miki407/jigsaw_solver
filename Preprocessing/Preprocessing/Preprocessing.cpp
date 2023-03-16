@@ -174,22 +174,6 @@ void savefloatToTxt(float point, std::string txt_path) {
     output_file << point;
     output_file.close();
 }
-void savePoints(std::string filename, std::vector<std::vector<cv::Point2f>> points) {
-    std::ofstream out_file;
-    out_file.open(filename);
-    if (!out_file) {
-        std::cout << "Error: unable to open file for writing" << std::endl;
-        return;
-    }
-    for (const auto& side : points) {
-        for (const auto& point : side) {
-            out_file << point.x << " " << point.y << std::endl;
-        }
-        out_file << std::endl;
-    }
-    out_file.close();
-    std::cout << "Successfully saved points to file: " << filename << std::endl;
-}
 std::vector<cv::Point2f> comparePoints( std::vector<cv::Point2f> corner_points, std::vector<cv::Point2f> line_points, double threshold) {
 
     std::vector<cv::Point2f> points;
@@ -265,30 +249,6 @@ std::vector<cv::Point2f> findMiddle(const std::vector<cv::Point2f>& corners) {
     middle.x /= 4;
     middle.y /= 4;
     return { middle };
-}
-std::vector<cv::Vec4f> extendLines(const std::vector<cv::Point2f>& start, const std::vector<cv::Point2f>& end) {
-
-    // check if the input vectors have 1 and 4 points respectively
-    if (start.size() != 1 || end.size() != 4) {
-        std::cout << "Error: the first vector should have 1 point and the second vector should have 4 points" << std::endl;
-        return {};
-    }
-
-    std::vector<cv::Vec4f> lines;
-
-    // Iterate over the 4 points in the end vector
-    for (int i = 0; i < 4; i++) {
-        // Find the direction vector
-        cv::Point2f direction = end[i] - start[0];
-        // Scale the direction vector by 200 pixels
-        direction *= 200;
-        // Find the end point of the line
-        cv::Point2f line_end = start[0] + direction;
-        // Store the line as a Vec4f
-        lines.push_back(cv::Vec4f(start[0].x, start[0].y, line_end.x, line_end.y));
-    }
-    // return the vector of lines
-    return lines;
 }
 void movePoints(std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2) {
     for (int i = 0; i < points1.size(); i++) {
@@ -391,35 +351,6 @@ std::vector<cv::Point2f> isolatePoints(const std::vector<cv::Point2f>& points,co
 
     return isolatedPoints;
 }
-void displayPoints(const std::vector<cv::Point2f>& points, const cv::Scalar& color = cv::Scalar(255, 255, 255)) {
-    // Create a black image to display the points on
-    cv::Mat img = cv::Mat::zeros(cv::Size( 567,426), CV_8UC3);
-
-    // Draw the points on the image
-    for (int i = 0; i < points.size(); i++) {
-        cv::circle(img, points[i], 1, color, -1);
-    }
-
-    // Display the image
-    cv::imshow("Points", img);
-    cv::waitKey(0);
-    cv::destroyAllWindows();
-}
-void displayImage(const std::string& imagePath) {
-    // Load the image from the file path
-    cv::Mat img = cv::imread(imagePath);
-
-    // Check if the image was loaded successfully
-    if (img.empty()) {
-        std::cerr << "Error: could not load image '" << imagePath << "'" << std::endl;
-        return;
-    }
-
-    // Display the image
-    cv::imshow("Image", img);
-    cv::waitKey(0);
-    cv::destroyAllWindows();
-}
 void modifyVector(std::vector<cv::Point2f>& vector1, const std::vector<cv::Point2f>& vector2, int num) {
     // Remove any points from vector2 that are already in vector1
    // std::cout << vector1.size();
@@ -442,9 +373,9 @@ void modifyVector(std::vector<cv::Point2f>& vector1, const std::vector<cv::Point
             std::copy(uniquePoints.begin(), uniquePoints.end(), vector1.begin());
         }
 }
-void compare_vectors(std::vector<cv::Point2f> v1, std::vector<cv::Point2f> v2) {
+double compare_vectors(std::vector<cv::Point2f> v1, std::vector<cv::Point2f> v2) {
     double score = 0.0;
-    double max_score = 0.0;
+    double max_score = 1.0;
 
     for (const auto& p1 : v1) {
         for (const auto& p2 : v2) {
@@ -454,9 +385,10 @@ void compare_vectors(std::vector<cv::Point2f> v1, std::vector<cv::Point2f> v2) {
     }
 
     max_score = std::max(v1.size(), v2.size());
-
-    std::cout << score / max_score ;
-    std::cout << "\n";
+    double n = score / max_score;
+  //  std::cout << score / max_score ;
+   // std::cout << "\n";
+    return n;
 }
 cv::Point2f parse_line(const std::string& line) {
     std::istringstream iss(line);
@@ -488,44 +420,30 @@ cv::Point2f move_to_origin(std::vector<cv::Point2f>& points) {
     cv::Point2f first_point = points[0];
     float offset_x = first_point.x;
     float offset_y = first_point.y;
-  //  for (int i = 1; i < points.size(); i++) {
-   //     offset_x = std::min(offset_x, points[i].x);
-  //      offset_y = std::min(offset_y, points[i].y);
-  //  }
+
     for (int i = 0; i < points.size(); i++) {
         points[i].x -= offset_x;
         points[i].y -= offset_y;
     }
     return cv::Point2f(offset_x, offset_y);
 }
-    double rotatePoints(std::vector<cv::Point2f>&points) {
-        // Find the angle between the first and last point
-        cv::Point2f lastPoint = points.back();
-        double angle = atan2(lastPoint.x, lastPoint.y);
+double rotatePoints(std::vector<cv::Point2f>& points) {
+    // Find the angle between the first and last point
+    cv::Point2f lastPoint = points.back();
+    double angle = atan2(lastPoint.x, lastPoint.y);
 
-        // Rotate all points around (0, 0) by this angle
-        for (cv::Point2f& point : points) {
-            double x = point.x;
-            double y = point.y;
-            point.x = x * cos(angle) - y * sin(angle);
-            point.y = x * sin(angle) + y * cos(angle);
-        }
+    // Rotate all points around (0, 0) by this angle
+    for (cv::Point2f& point : points) {
+        double x = point.x;
+        double y = point.y;
+        point.x = x * cos(angle) - y * sin(angle);
+        point.y = x * sin(angle) + y * cos(angle);
+    }
 
-        // Calculate the rotation in degrees and return it
-        double rotation = angle * 180 / pi;
-        return rotation;
-    }
-    void delete_similar_points(std::vector<cv::Point2f>& points) {
-        if (points.size() < 11) {
-            return;
-        }
-        cv::Point2f first = points[0];
-        for (int i = points.size() -1 ; i >= points.size() - 11; i--) {
-            if (std::abs(points[i].x - first.x) < 20 && std::abs(points[i].y - first.y) < 20) {
-                points.erase(points.begin() + i);
-            }
-        }
-    }
+    // Calculate the rotation in degrees and return it
+    double rotation = angle * 180 / pi;
+    return rotation;
+}
 int main() {
     double lenght_array[100];
 
@@ -569,7 +487,6 @@ int main() {
         std::vector<cv::Point2f> middle = findMiddle(four_points);
 
         movePoints(four_points, outline);
-        std::vector<cv::Vec4f> lines_midle = extendLines(middle, four_points);
 
         std::cout << " |##### |  101%\r";
         std::vector<cv::Point2f> reorderedPoints = reorderPoints(outline);
@@ -692,13 +609,43 @@ int main() {
     for (int n = 0; n < 24; n++) {
         std::cout << lenght_array[n] << "\n";
     }
+    double matching[24*24];
+    std::string name[24*24];
+    int counter = 0;
     for (int number1 = 0; number1 < 6; number1++) {
-        for (int number = 1; number < 5; number++) { 
+        for (int number2 = 1; number2 < 5; number2++) {
+            std::string n0 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\";
+            n0 += std::to_string(number1) + "_n" + std::to_string(number2) + ".txt";
+            for (int number = 0; number < 6; number++) {
 
+                std::string n1 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+                n1 += "_n1.txt";
+                std::string n2 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+                n2 += "_n2.txt";
+                std::string n3 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+                n3 += "_n3.txt";
+                std::string n4 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+                n4 += "_n4.txt";
+                std::vector<cv::Point2f> v0 = read_vector(n0);
+                std::vector<cv::Point2f> v1 = read_vector(n1);
+                std::vector<cv::Point2f> v2 = read_vector(n2);
+                std::vector<cv::Point2f> v3 = read_vector(n3);
+                std::vector<cv::Point2f> v4 = read_vector(n4);
+                matching[counter*4] = compare_vectors(v0, v1);
+               // std::cout << "_" << number1 << "_" << number << "_0-1\n";
+                matching[counter * 4 + 1] = compare_vectors(v0, v2);
+              //  std::cout << "_" << number1 << "_" << number << "_1-2\n";
+                matching[counter * 4 + 2] = compare_vectors(v0, v3);
+              //  std::cout << "_" << number1 << "_" << number << "_2-3\n";
+                matching[counter * 4 + 3] = compare_vectors(v0, v4);
+              //  std::cout << "_" << number1 << "_" << number << "_3-0\n";
+                counter++;
+            }
         }
-       
-       
     }
-   
+  for (int n = 0; n < 24*24; n++) {
+        std::cout << matching[n] << "\n";
+   }
+ 
     return 0;
 }
