@@ -3,8 +3,13 @@
 #include <fstream>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
+#include <sstream>
+#include <opencv2/core.hpp>
+#include <cmath>
 
-void Jpgpreprocesor(std::string input_image_path, std::string output_image_path) {
+const float pi = 3.14159265358979323846f;
+cv::Mat Jpgpreprocesor(std::string input_image_path, std::string output_image_path) {
     // Load the image
     cv::Mat image = cv::imread(input_image_path);
 
@@ -13,35 +18,38 @@ void Jpgpreprocesor(std::string input_image_path, std::string output_image_path)
     cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
 
     // Save the grayscale image as a bitmap
-    cv::imwrite(output_image_path, gray);
+    // 
+    //cv::imwrite(output_image_path, gray);
+    return gray;
 }
-void runDerivative(std::string input_image_path, std::string output_image_path) {
+cv::Mat runDerivative(std::string input_image_path, std::string output_image_path, cv::Mat image) {
     // Load the image
-    cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
+    //cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
 
     // Run derivative function 
     cv::Mat derivative;
     cv::Sobel(image, derivative, CV_8U, 1, 1, 1, 255);
 
     // Save the derivative image 
-    cv::imwrite(output_image_path, derivative);
+    //cv::imwrite(output_image_path, derivative);
+    return derivative;
 
 }
-void convertToBinaryBitmap(std::string input_image_path, std::string output_image_path, int threshold) {
+cv::Mat convertToBinaryBitmap(std::string input_image_path, std::string output_image_path, int threshold, cv::Mat image) {
     // Load the image
-    cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
+    //cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
 
     // Apply thresholding to the image
     cv::Mat binary;
     cv::threshold(image, binary, threshold, 255, cv::THRESH_BINARY);
 
     // Save the binary image
-    cv::imwrite(output_image_path, binary);
+    //cv::imwrite(output_image_path, binary);
+    return binary;
 }
-
-void removeBlackClusters(std::string input_image_path, std::string output_image_path, int cluster_threshold) {
+cv::Mat removeBlackClusters(std::string input_image_path, std::string output_image_path, int cluster_threshold, cv::Mat image) {
     // Load the binary image
-    cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
+    //cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
 
     // Create a binary image for storing the result
     cv::Mat result;
@@ -63,11 +71,12 @@ void removeBlackClusters(std::string input_image_path, std::string output_image_
     }
 
     // Save the result image
-    cv::imwrite(output_image_path, result);
+    //cv::imwrite(output_image_path, result);
+    return result;
 }
-void removeWhiteClusters(std::string input_image_path, std::string output_image_path, int cluster_threshold) {
+cv::Mat removeWhiteClusters(std::string input_image_path, std::string output_image_path, int cluster_threshold, cv::Mat image) {
     // Load the binary image
-    cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
+    //cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
 
     // Create a binary image for storing the result
     cv::Mat result;
@@ -89,12 +98,12 @@ void removeWhiteClusters(std::string input_image_path, std::string output_image_
     }
 
     // Save the result image
-    cv::imwrite(output_image_path, result);
+    //cv::imwrite(output_image_path, result);
+    return result;
 }
-
-std::vector<cv::Point2f> findCorners(std::string input_image_path, std::string output_image_path) {
+std::vector<cv::Point2f> findCorners(std::string input_image_path, std::string output_image_path, cv::Mat image) {
     // Load the image
-    cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
+    //cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
 
     // Create a binary image for storing the result
     cv::Mat binary;
@@ -120,10 +129,9 @@ std::vector<cv::Point2f> findCorners(std::string input_image_path, std::string o
     // Return the red points
     return corners;
 }
-
-void removeRuggedEdges(std::string input_image_path, std::string output_image_path) {
+cv::Mat removeRuggedEdges(std::string input_image_path, std::string output_image_path, cv::Mat image) {
     // Load the binary image
-    cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
+    //cv::Mat image = cv::imread(input_image_path, cv::IMREAD_GRAYSCALE);
 
     // Create a binary image for storing the result
     cv::Mat result;
@@ -137,7 +145,8 @@ void removeRuggedEdges(std::string input_image_path, std::string output_image_pa
     cv::erode(result, result, kernel);
 
     // Save the result image
-    cv::imwrite(output_image_path, result);
+    //cv::imwrite(output_image_path, result);
+    return result;
 }
 std::vector<cv::Point2f> mapWhitePixels(const std::string image_path) {
     std::vector<cv::Point2f> white_pixels;
@@ -225,6 +234,18 @@ void savePointsToTxt(std::vector<cv::Point2f> points, std::string txt_path) {
     for (auto const& point : points) {
         output_file << point.x << " " << point.y << std::endl;
     }
+    output_file.close();
+}
+void savePointToTxt(cv::Point2f point, std::string txt_path) {
+    std::ofstream output_file;
+    output_file.open(txt_path);
+    output_file << point.x << " " << point.y << std::endl;
+    output_file.close();
+}
+void savefloatToTxt(float point, std::string txt_path) {
+    std::ofstream output_file;
+    output_file.open(txt_path);
+    output_file << point;
     output_file.close();
 }
 void savePoints(std::string filename, std::vector<std::vector<cv::Point2f>> points) {
@@ -358,17 +379,6 @@ std::vector<cv::Vec4f> extendLines(const std::vector<cv::Point2f>& start, const 
     // return the vector of lines
     return lines;
 }
-void displayEdgeTables(const std::vector<std::vector<std::pair<int, int>>>& subTables, const std::vector<cv::Point2f>& points) {
-    cv::Mat img(426, 567, CV_8UC3, cv::Scalar(255, 255, 255));
-    for (int i = 0; i < subTables.size(); i++) {
-        for (int j = 0; j < subTables[i].size(); j++) {
-            cv::line(img, points[subTables[i][j].first], points[subTables[i][j].second], cv::Scalar(0, 0, 0), 1);
-        }
-        cv::imshow("Edge Tables", img);
-    }
- 
-    cv::waitKey(0);
-}
 void movePoints(std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f>& points2) {
     for (int i = 0; i < points1.size(); i++) {
         int closest = 0;
@@ -383,124 +393,265 @@ void movePoints(std::vector<cv::Point2f>& points1, const std::vector<cv::Point2f
         points1[i] = points2[closest];
     }
 }
-void displayEdgeTable(const std::vector<std::pair<int, int>>& edgeTable, const std::vector<cv::Point2f>& points) {
-    cv::Mat img(426, 567, CV_8UC3, cv::Scalar(255, 255, 255));
-    for (int i = 0; i < edgeTable.size(); i++) {
-        cv::line(img, points[edgeTable[i].first], points[edgeTable[i].second], cv::Scalar(0, 0, 0), 1);
-    }
-    cv::imshow("Edge Table", img);
-    cv::waitKey(0);
-}
-void saveEdgeTable(const std::vector<std::pair<int, int>>& edgeTable, const std::string& filename) {
-    std::ofstream outFile;
-    outFile.open(filename);
-    for (int i = 0; i < edgeTable.size(); i++) {
-        outFile << edgeTable[i].first << " " << edgeTable[i].second << std::endl;
-    }
-    outFile.close();
-}
-void drawLines(std::string imagePath, std::vector<cv::Vec4f> lines) {
-    cv::Mat image = cv::imread(imagePath);
-    for (auto line : lines) {
-        cv::line(image, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(0, 0, 255), 2);
-    }
-  
-    cv::waitKey(0);
-    cv::imwrite(imagePath, image);
-}
-std::vector<std::pair<int, int>> createEdgeTable(const std::vector<cv::Point2f>& input1, const std::vector<cv::Point2f>& input2) {
-    std::vector<std::pair<int, int>> edgeTable;
-    std::vector<bool> usedPoints1(input1.size(), false);
-    std::vector<bool> usedPoints2(input2.size(), false);
+std::vector<cv::Point2f> reorderPoints(const std::vector<cv::Point2f>& points) {
+    // Initialize the reordered points vector with the first point
+    std::vector<cv::Point2f> reorderedPoints;
+    reorderedPoints.push_back(points[0]);
 
-    // Find the closest point in input2 to the first point of input1
-    int closest = 0;
-    float closestDist = cv::norm(input2[0] - input1[0]);
-    for (int i = 1; i < input2.size(); i++) {
-        float dist = cv::norm(input2[i] - input1[0]);
-        if (dist < closestDist) {
-            closestDist = dist;
-            closest = i;
-        }
-    }
+    // Remove the first point from the unprocessed points vector
+    std::vector<cv::Point2f> unprocessedPoints(points.begin() + 1, points.end());
 
-    // Continue to find the closest point in input1 to the last point of the edge table
-    int last = closest;
-    while (true) {
-        closestDist = std::numeric_limits<float>::max();
-        closest = -1;
-        for (int i = 0; i < input1.size(); i++) {
-            if (!usedPoints1[i]) {
-                float dist = cv::norm(input1[i] - input2[last]);
-                if (dist < closestDist) {
-                    closestDist = dist;
-                    closest = i;
-                }
+    // Iteratively connect the closest unconnected point to the last processed point
+    while (!unprocessedPoints.empty()) {
+        cv::Point2f lastPoint = reorderedPoints.back();
+        cv::Point2f closestPoint = unprocessedPoints[0];
+        float closestDistance = cv::norm(closestPoint - lastPoint);
+
+        // Find the closest unconnected point to the last processed point
+        for (int i = 1; i < unprocessedPoints.size(); i++) {
+            cv::Point2f point = unprocessedPoints[i];
+            float distance = cv::norm(point - lastPoint);
+            if (distance < closestDistance) {
+                closestPoint = point;
+                closestDistance = distance;
             }
         }
 
-        if (closest == -1) {
+        // Add the closest point to the reordered points vector and remove it from the unprocessed points vector
+        reorderedPoints.push_back(closestPoint);
+        unprocessedPoints.erase(std::remove(unprocessedPoints.begin(), unprocessedPoints.end(), closestPoint), unprocessedPoints.end());
+    }
+
+    return reorderedPoints;
+}
+
+double distance_between_points(const std::vector<cv::Point2f>& points) {
+    cv::Point2f p1 = points[0];
+    cv::Point2f p2 = points.back();
+    double dx = p1.x - p2.x;
+    double dy = p1.y - p2.y;
+    return std::sqrt(dx * dx + dy * dy);
+}
+std::vector<cv::Point2f> isolatePoints(const std::vector<cv::Point2f>& points,const std::vector<cv::Point2f>& boundaries,int boundaryPoint1, int boundaryPoint2) {
+    // Find the corresponding points in the input vector for the two boundary points
+    cv::Point2f boundary1 = boundaries[boundaryPoint1];
+    cv::Point2f boundary2 = boundaries[boundaryPoint2];
+    int index1 = -1;
+    int index2 = -1;
+    for (int i = 0; i < points.size(); i++) {
+        if (cv::norm(points[i] - boundary1) < 1e-6) {
+            index1 = i;
+        }
+        if (cv::norm(points[i] - boundary2) < 1e-6) {
+            index2 = i;
+        }
+        if (index1 != -1 && index2 != -1) {
             break;
         }
-
-        edgeTable.push_back(std::make_pair(last, closest));
-        usedPoints1[closest] = true;
-        last = closest;
     }
 
-    // Find the closest point in input2 to the last point of the edge table
-    closestDist = std::numeric_limits<float>::max();
-    closest = -1;
-    for (int i = 0; i < input2.size(); i++) {
-        if (!usedPoints2[i]) {
-            float dist = cv::norm(input2[i] - input1[last]);
-            if (dist < closestDist) {
-                closestDist = dist;
-                closest = i;
-            }
+    // Swap the indices if index1 is greater than index2
+    if (index1 > index2) {
+        int temp = index1;
+        index1 = index2;
+        index2 = temp;
+    }
+
+    // Check if the two boundary points are at opposite ends of the input vector
+    bool isCircular = false;
+    if ((index2 == points.size() - 500 && index1 == 499) || (index1 == points.size() - 500 && index2 == 499)) {
+        isCircular = true;
+    }
+
+    // Create a new vector of points containing the points between the boundary points
+    std::vector<cv::Point2f> isolatedPoints;
+    if (isCircular) {
+        for (int i = index1; i <= index2; i++) {
+            isolatedPoints.push_back(points[i]);
+        }
+        isolatedPoints.insert(isolatedPoints.end(), points.begin(), points.begin() + index1);
+        isolatedPoints.insert(isolatedPoints.end(), points.begin() + index2 + 1, points.end());
+    }
+    else {
+        for (int i = index1; i <= index2; i++) {
+            isolatedPoints.push_back(points[i]);
         }
     }
 
-    edgeTable.push_back(std::make_pair(last, closest));
-    usedPoints2[closest] = true;
-
-    return edgeTable;
+    return isolatedPoints;
 }
+void displayPoints(const std::vector<cv::Point2f>& points, const cv::Scalar& color = cv::Scalar(255, 255, 255)) {
+    // Create a black image to display the points on
+    cv::Mat img = cv::Mat::zeros(cv::Size( 567,426), CV_8UC3);
+
+    // Draw the points on the image
+    for (int i = 0; i < points.size(); i++) {
+        cv::circle(img, points[i], 1, color, -1);
+    }
+
+    // Display the image
+    cv::imshow("Points", img);
+    cv::waitKey(0);
+    cv::destroyAllWindows();
+}
+void displayImage(const std::string& imagePath) {
+    // Load the image from the file path
+    cv::Mat img = cv::imread(imagePath);
+
+    // Check if the image was loaded successfully
+    if (img.empty()) {
+        std::cerr << "Error: could not load image '" << imagePath << "'" << std::endl;
+        return;
+    }
+
+    // Display the image
+    cv::imshow("Image", img);
+    cv::waitKey(0);
+    cv::destroyAllWindows();
+}
+void modifyVector(std::vector<cv::Point2f>& vector1, const std::vector<cv::Point2f>& vector2, int num) {
+    // Remove any points from vector2 that are already in vector1
+   // std::cout << vector1.size();
+        std::vector<cv::Point2f> uniquePoints;
+        for (const auto& point : vector2) {
+            if (std::find(vector1.begin(), vector1.end(), point) == vector1.end()) {
+                uniquePoints.push_back(point);
+            }
+        }
+
+        // Replace the first num points in vector1 with the unique points from vector2
+        if (vector1.size() > num) {
+            for (int i = 0; i < num; i++) {
+                vector1[i] = uniquePoints[i % uniquePoints.size()];
+            }
+        }
+        // If vector1 has fewer than num points, append the remaining unique points from vector2
+        else {
+            vector1.resize(uniquePoints.size());
+            std::copy(uniquePoints.begin(), uniquePoints.end(), vector1.begin());
+        }
+}
+void compare_vectors(std::vector<cv::Point2f> v1, std::vector<cv::Point2f> v2) {
+    double score = 0.0;
+    double max_score = 0.0;
+
+    for (const auto& p1 : v1) {
+        for (const auto& p2 : v2) {
+            double distance = cv::norm(p1 - p2);
+            score += 1.0 / (1.0 + distance);
+        }
+    }
+
+    max_score = std::max(v1.size(), v2.size());
+
+    std::cout << score / max_score ;
+    std::cout << "\n";
+}
+cv::Point2f parse_line(const std::string& line) {
+    std::istringstream iss(line);
+    float x, y;
+    iss >> x >> y;
+    return cv::Point2f(x, y);
+}
+std::vector<cv::Point2f> read_vector(const std::string& filename) {
+    std::vector<cv::Point2f> points;
+    std::ifstream infile(filename);
+
+    if (infile) {
+        std::string line;
+        while (std::getline(infile, line)) {
+            cv::Point2f point = parse_line(line);
+            points.push_back(point);
+        }
+    }
+    else {
+        std::cerr << "Error opening file: " << filename << std::endl;
+    }
+
+    return points;
+}
+cv::Point2f move_to_origin(std::vector<cv::Point2f>& points) {
+    if (points.empty()) {
+        return cv::Point2f(0, 0);
+    }
+    cv::Point2f first_point = points[0];
+    float offset_x = first_point.x;
+    float offset_y = first_point.y;
+  //  for (int i = 1; i < points.size(); i++) {
+   //     offset_x = std::min(offset_x, points[i].x);
+  //      offset_y = std::min(offset_y, points[i].y);
+  //  }
+    for (int i = 0; i < points.size(); i++) {
+        points[i].x -= offset_x;
+        points[i].y -= offset_y;
+    }
+    return cv::Point2f(offset_x, offset_y);
+}
+    double rotatePoints(std::vector<cv::Point2f>&points) {
+        // Find the angle between the first and last point
+        cv::Point2f lastPoint = points.back();
+        double angle = atan2(lastPoint.x, lastPoint.y);
+
+        // Rotate all points around (0, 0) by this angle
+        for (cv::Point2f& point : points) {
+            double x = point.x;
+            double y = point.y;
+            point.x = x * cos(angle) - y * sin(angle);
+            point.y = x * sin(angle) + y * cos(angle);
+        }
+
+        // Calculate the rotation in degrees and return it
+        double rotation = angle * 180 / pi;
+        return rotation;
+    }
+    void delete_similar_points(std::vector<cv::Point2f>& points) {
+        if (points.size() < 11) {
+            return;
+        }
+        cv::Point2f first = points[0];
+        for (int i = points.size() -1 ; i >= points.size() - 11; i--) {
+            if (std::abs(points[i].x - first.x) < 20 && std::abs(points[i].y - first.y) < 20) {
+                points.erase(points.begin() + i);
+            }
+        }
+    }
 int main() {
-    
+    double lenght_array[100];
+
     for (int number = 0; number < 6; number++) {
+        cv::Mat steps;
         std::string input_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         input_image_path += ".jpg";
         std::string output_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_image_path += "_0.bmp";
         std::cout << " |#     |  0% \r";
-        Jpgpreprocesor(input_image_path, output_image_path);
+        steps = Jpgpreprocesor(input_image_path, output_image_path);
         std::cout << " |##    |  20% \r";
         int threshold = 120;
         std::string output_binary_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_binary_image_path += "_1.bmp";
-        convertToBinaryBitmap(output_image_path, output_binary_image_path, threshold);
+        steps = convertToBinaryBitmap(output_image_path, output_binary_image_path, threshold, steps);
         std::cout << " |###   |  40% \r";
         std::string output_black_filtered_binary_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_black_filtered_binary_image_path += "_2.bmp";
         int cluster_size_black = 120;
-        removeBlackClusters(output_binary_image_path, output_black_filtered_binary_image_path, cluster_size_black);
+        steps = removeBlackClusters(output_binary_image_path, output_black_filtered_binary_image_path, cluster_size_black, steps);
         std::string output_white_filtered_binary_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_white_filtered_binary_image_path += "_3.bmp";
         int cluster_size_white = 120;
-        removeWhiteClusters(output_black_filtered_binary_image_path, output_white_filtered_binary_image_path, cluster_size_white);
+        steps = removeWhiteClusters(output_black_filtered_binary_image_path, output_white_filtered_binary_image_path, cluster_size_white, steps);
         std::cout << " |####  |  60% \r";
         std::string output_soft_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_soft_image_path += "_4.bmp";
-        removeRuggedEdges(output_white_filtered_binary_image_path, output_soft_image_path);
+        steps = removeRuggedEdges(output_white_filtered_binary_image_path, output_soft_image_path, steps);
         std::cout << " |##### |  80% \r";
         std::string output_derivative_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_derivative_image_path += "_5.bmp";
-        runDerivative(output_soft_image_path, output_derivative_image_path);
+        steps = runDerivative(output_soft_image_path, output_derivative_image_path, steps);
         std::cout << " |##### |  90% \r";
         std::string output_point_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_point_image_path += "_6.bmp";
-        std::vector<cv::Point2f> corner_points = findCorners(output_soft_image_path, output_point_image_path);
+        std::vector<cv::Point2f> corner_points = findCorners(output_soft_image_path, output_point_image_path,steps);
         std::string output_point_line_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_point_line_image_path += "_7.bmp";
         int extend_length = 40;
@@ -509,7 +660,7 @@ int main() {
         output_combine_point_image_path += "_9.bmp";
         double threshold_point = 10;
         std::vector<cv::Point2f> compared_points = comparePoints(corner_points, line_points, threshold_point, output_combine_point_image_path);
-       
+
         std::string output_txt_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_txt_path += "_1.txt";
         savePointsToTxt(corner_points, output_txt_path);
@@ -526,24 +677,124 @@ int main() {
         std::vector<cv::Point2f> middle = findMiddle(four_points);
         std::string output_txt4_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_txt4_path += "_4.txt";
-        savePointsToTxt(middle, output_txt4_path);
         std::cout << " |##### |  100%\r";
         movePoints(four_points, outline);
         std::vector<cv::Vec4f> lines_midle = extendLines(middle, four_points);
         std::cout << " |##### |  101%\r";
-        std::string output_e_line_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
-        output_e_line_image_path += "_11.bmp";
-        std::vector<std::pair<int, int>> createEdgeTable(outline,four_points)
-   //     std::vector<std::pair<int, int>> edge_table = createEdgeTable(outline, four_points);
-   //     std::cout << " |##### |  102%\r";
-  //      std::vector<std::vector<std::pair<int, int>>> eges = cutEdgeTable(edge_table, outline, four_points);
-  //      std::cout << " |##### |  103%\r";
- //       displayEdgeTables(eges, outline);
-   //     std::cout << " |##### |  104%\r";
-  //      std::string output_txt5_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
- //       output_txt5_path += "_5.txt";
-  //      saveEdgeTable(edge_table, output_txt5_path);
-        //displayEdgeTable(edge_table, outline);
+        savePointsToTxt(four_points, output_txt4_path);
+        //   std::string output_e_line_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+       //    output_e_line_image_path += "_11.bmp";
+        std::vector<cv::Point2f> reorderedPoints = reorderPoints(outline);
+        std::string output_txt5_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt5_path += "_5.txt";
+        savePointsToTxt(middle, output_txt5_path);
+        savePointsToTxt(reorderedPoints, output_txt5_path);
+        std::string output_txt6_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt6_path += "_6.txt";
+        savePointsToTxt(outline, output_txt6_path);
+        std::cout << " |##### |  105%\r";
+        std::vector<cv::Point2f> reorderedfourPoints = reorderPoints(four_points);
+        std::string output_txt7_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt7_path += "_7.txt";
+        savePointsToTxt(reorderedfourPoints, output_txt7_path);
+        std::cout << " |##### |  110%\r";
+
+        std::vector<cv::Point2f> isolatedPoints = isolatePoints(reorderedPoints, reorderedfourPoints, 0, 1);
+        std::string output_txt8_path1 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path1 += "_n1.txt";
+        std::string output_txt8_path1_1 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path1_1 += "_o1.txt";
+        std::string output_txt8_path1_2 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path1_2 += "_a1.txt";
+        if (isolatedPoints.size() > 1000) {
+            modifyVector(isolatedPoints, reorderedPoints, 10000);
+        }
+        delete_similar_points(isolatedPoints);
+            cv::Point2f o = move_to_origin(isolatedPoints);
+            savePointToTxt(o, output_txt8_path1_1);
+            float a = rotatePoints(isolatedPoints);
+      
+            savefloatToTxt(a, output_txt8_path1_1);
+        savePointsToTxt(isolatedPoints, output_txt8_path1);
+     double  d1 = distance_between_points(isolatedPoints);
+     std::cout << " |##### |  115%\r";
+     //  displayImage(output_derivative_image_path);
+   // displayPoints(isolatedPoints);
+       isolatedPoints = isolatePoints(reorderedPoints, reorderedfourPoints, 1, 2);
+        std::string output_txt8_path2 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path2 += "_n2.txt";
+        std::string output_txt8_path2_1 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path2_1 += "_o2.txt";
+        std::string output_txt8_path2_2 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path2_2 += "_a1.txt";
+        if (isolatedPoints.size() > 1000) {
+            modifyVector(isolatedPoints, reorderedPoints, 10000);
+        }  
+        delete_similar_points(isolatedPoints);
+         o = move_to_origin(isolatedPoints);
+        savePointToTxt(o, output_txt8_path2_1);
+        a = rotatePoints(isolatedPoints);
+
+        savefloatToTxt(a, output_txt8_path2_1);
+        savePointsToTxt(isolatedPoints, output_txt8_path2);
+      double  d2 = distance_between_points(isolatedPoints);
+      std::cout << " |##### |  120%\r";
+    //    displayPoints(isolatedPoints);
+       isolatedPoints = isolatePoints(reorderedPoints, reorderedfourPoints, 2, 3);
+        std::string output_txt8_path3 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path3 += "_n3.txt";
+        std::string output_txt8_path3_1 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path3_1 += "_o3.txt";
+        std::string output_txt8_path3_2 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path3_2 += "_a1.txt";
+        if (isolatedPoints.size() > 1000) {
+            modifyVector(isolatedPoints, reorderedPoints, 10000);
+        }
+        delete_similar_points(isolatedPoints);
+       o = move_to_origin(isolatedPoints);
+        savePointToTxt(o, output_txt8_path3_1);
+         a = rotatePoints(isolatedPoints);
+  
+        savefloatToTxt(a, output_txt8_path3_1);
+        savePointsToTxt(isolatedPoints, output_txt8_path3);
+       double  d3 = distance_between_points(isolatedPoints);
+       std::cout << " |##### |  125%\r";
+     //displayPoints(isolatedPoints);
+       isolatedPoints = isolatePoints(reorderedPoints, reorderedfourPoints, 3, 0);
+        std::string output_txt8_path4 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path4 += "_n4.txt";
+        std::string output_txt8_path4_1 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path4_1 += "_o4.txt";
+        std::string output_txt8_path4_2 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
+        output_txt8_path4_2 += "_a1.txt";
+        if (isolatedPoints.size() > 1000) {
+            modifyVector(isolatedPoints, reorderedPoints, 10000);
+        }
+        delete_similar_points(isolatedPoints);
+        o = move_to_origin(isolatedPoints);
+        savePointToTxt(o, output_txt8_path4_1);
+         a = rotatePoints(isolatedPoints);
+
+        savefloatToTxt(a, output_txt8_path4_1);
+        savePointsToTxt(isolatedPoints, output_txt8_path4);
+        double  d4 = distance_between_points(isolatedPoints);
+        std::cout << " |##### |  130%\r";
+        lenght_array[number*4] = d1;
+        lenght_array[number*4 + 1] = d2;
+        lenght_array[number*4 + 2] = d3;
+        lenght_array[number*4 + 3] = d4;
+        
     }
+    for (int n = 0; n < 24; n++) {
+        std::cout << lenght_array[n] << "\n";
+    }
+    for (int number1 = 0; number1 < 6; number1++) {
+        for (int number = 1; number < 5; number++) { 
+
+        }
+       
+       
+    }
+   
     return 0;
 }
