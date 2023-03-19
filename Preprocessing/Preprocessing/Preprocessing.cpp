@@ -58,11 +58,17 @@ int main(){
         //cv::cornerHarris(image, image, 20, 0, 0.2);
         status(step, "Ran cornerHarris() on image");
         cv::Mat img_with_points = image.clone();
-
+        int  x_sum;
+        int  y_sum;
         // draw each point as a red circle
         for (int i = 0; i < corners.size(); i++) {
             cv::circle(img_with_points, corners[i], 10, cv::Scalar(255, 255, 255), -1);
+            x_sum = corners[i].x;
+            y_sum = corners[i].y;
         }
+        int avrage_x = x_sum / 4;
+        int avrage_y = y_sum / 4;
+        cv::Point2f middle(avrage_x, avrage_y);
         cv::Mat resized_img;
         cv::resize(img_with_points, resized_img, cv::Size((194 * 3), (259 * 3)));
 
