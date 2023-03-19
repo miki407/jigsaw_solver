@@ -13,10 +13,14 @@ const float pi = 3.14159265358979323846f;
 
 const int pieces_x = 10;
 const int pieces_y = 10;
+int lenght = 7;
+int hight = 10;
+int p_number = lenght * hight;
+
 
 //[Number of pieces]
 double Data[pieces_x * pieces_y][4][1][1];
-int match[7][5][2];
+int match[24];
 
 cv::Mat Jpgpreprocesor(std::string input_image_path) {
     // Load the image
@@ -81,7 +85,7 @@ std::vector<cv::Point2f> findCorners( cv::Mat image) {
     
     // Find the corners in the binary image
     std::vector<cv::Point2f> corners;
-    cv::goodFeaturesToTrack(image, corners, 10, 0.01, 75, cv::Mat(), 10, 3,0,0.4);
+    cv::goodFeaturesToTrack(image, corners, 15, 0.01, 250, cv::Mat(), 35, 3,0,0.4);
 
     // Return the corner points
     return corners;
@@ -89,7 +93,7 @@ std::vector<cv::Point2f> findCorners( cv::Mat image) {
 cv::Mat removeRuggedEdges(cv::Mat image) {
    
     // Remove rugged edges by dilating and eroding the image
-    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1));
+    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 1));
     cv::dilate(image, image, kernel);
     cv::erode(image, image, kernel);
 
@@ -111,7 +115,7 @@ std::vector<cv::Point2f> findWhiteLines(cv::Mat image) {
     cv::Mat color_dst = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
     // Find all the lines in the image
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(image, lines, 1, CV_PI / 180, 30, 20, 15);
+    cv::HoughLinesP(image, lines, 2, CV_PI / 180, 30, 100, 110);
 
     //create a vector to store the collision points
     std::vector<cv::Point2f> collision_points;
@@ -134,8 +138,8 @@ std::vector<cv::Point2f> findWhiteLines(cv::Mat image) {
             cv::Point2f p4 = cv::Point2f(l2[2], l2[3]);
             cv::Point2f diff2 = p4 - p3;
             cv::Point2f norm2 = diff2 / cv::norm(diff2);
-            p3 -= norm2 * 30;
-            p4 += norm2 * 30;
+            p3 -= norm2 * 40;
+            p4 += norm2 * 40;
             cv::Point2f collision_candidate;
             double d1 = (p1.x - p2.x) * (p3.y - p1.y) - (p1.y - p2.y) * (p3.x - p1.x);
             double d2 = (p1.x - p2.x) * (p4.y - p1.y) - (p1.y - p2.y) * (p4.x - p1.x);
@@ -506,17 +510,23 @@ double compare_vectors_v1(std::vector<cv::Point2f> v1, std::vector<cv::Point2f> 
    // std::cout << "\n";
     return n;
 }
-void displayPoints(const std::vector<cv::Point2f>& points) {
-    cv::Mat img(2000, 2000, CV_8UC3, cv::Scalar(255, 255, 255)); // create a white image
-    int radius = 1; // set the radius of the points to 5 pixels
+
+void displayPoints(const std::vector<cv::Point2f>& points, const cv::Mat& img) {
+
+    int radius = 10; // set the radius of the points to 5 pixels
+
+    // create a copy of the input image to draw the points on
+    cv::Mat img_with_points = img.clone();
 
     // draw each point as a red circle
     for (int i = 0; i < points.size(); i++) {
-        cv::circle(img, points[i], radius, cv::Scalar(0, 0, 255), -1);
+        cv::circle(img_with_points, points[i], radius, cv::Scalar(255, 255, 255), -1);
     }
+    cv::Mat resized_img;
+    cv::resize(img_with_points, resized_img, cv::Size((194 * 3), (259 * 3)));
 
-    // display the image in a window
-    cv::imshow("Points", img);
+    // display the image with points in a window
+    cv::imshow("Points", resized_img);
     cv::waitKey(0);
 }
 double compare_vectors_v2(const std::vector<cv::Point2f>& v1, const std::vector<cv::Point2f>& v2) {
@@ -614,53 +624,68 @@ std::vector<cv::Point2f> combineVectors(std::vector<cv::Point2f> v1, std::vector
     // Return the combined vector of points
     return v1;
 }
-int main() {
-    double lenght_array[100];
+void displayimage(cv::Mat img) {
+    // resize the image
+    cv::Mat resized_img;
+    cv::resize(img, resized_img, cv::Size((194*3), (259*3)));
 
-    for (int number = 0; number < 6; number++) {
+    // display the resized image in a window
+    cv::imshow("Points", resized_img);
+    cv::waitKey(0);
+}
+int main() {
+//    double lenght_array[100];
+
+    for (int number = 1; number <= p_number; number++) {
         cv::Mat steps;
         std::string input_image_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         input_image_path += ".jpg";
         std::cout << " |#     |  0% \r";
         steps = Jpgpreprocesor(input_image_path);
+   //     displayimage(steps);
 
         std::cout << " |##    |  20% \r";
-        int threshold = 120;
+        int threshold = 100;
         steps = convertToBinaryBitmap(threshold, steps);
-
+   
         std::cout << " |###   |  40% \r";
-        int cluster_size_black = 120;
+        int cluster_size_black = 2020;
         steps = removeBlackClusters(cluster_size_black, steps);
-
-        int cluster_size_white = 120;
+    
+        int cluster_size_white = 2020;
         steps = removeWhiteClusters(cluster_size_white, steps);
-
+      
         std::cout << " |####  |  60% \r";
         steps = removeRuggedEdges(steps);
-
+  //      displayimage(steps);
         std::cout << " |##### |  80% \r";
         steps = runDerivative(steps);
-
+  //      displayimage(steps);
         std::cout << " |##### |  90% \r";
         std::vector<cv::Point2f> outline = mapWhitePixels(steps);
-
+      
         std::vector<cv::Point2f> corner_points = findCorners(steps);
-
+        displayPoints(corner_points,steps);
+    
         int extend_length = 40;
         std::vector<cv::Point2f> line_points = findWhiteLines(steps);
 
-        double threshold_point = 10;
+        displayPoints(line_points,steps);
+        double threshold_point = 50;
         std::vector<cv::Point2f> compared_points = comparePoints(corner_points, line_points, threshold_point);
 
+        displayPoints(compared_points,steps);
         std::vector<cv::Point2f> four_points = keepFarthestPoints(compared_points);
 
+        displayPoints(four_points,steps);
         std::vector<cv::Point2f> middle = findMiddle(four_points);
 
         movePoints(four_points, outline);
-
+  
         std::cout << " |##### |  101%\r";
         std::vector<cv::Point2f> reorderedPoints = reorderPoints(outline);
-
+    }
+/*
         std::string output_txt5_path = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(number);
         output_txt5_path += "_points.txt";
         savePointsToTxt(reorderedPoints, output_txt5_path);
@@ -774,7 +799,8 @@ int main() {
         lenght_array[number * 4 + 1] = d2;
         lenght_array[number * 4 + 2] = d3;
         lenght_array[number * 4 + 3] = d4;
-
+    }
+/*
     }
     for (int n = 0; n < 24; n++) {
         std::cout << lenght_array[n] << "\n";
@@ -815,6 +841,7 @@ int main() {
                 std::cout << " |######|";
                 counter++;
 
+
             }
         }
     }
@@ -833,11 +860,12 @@ int main() {
             }
             if (i == 19 + (n * 20)) {
                 std::cout << largest << "\n" << p3 << "\n" << p2 << "\n" << n + 1 << "\n";
-                match[(n + 1) / 6][i - (n * 20) + 1][0] = p2;
-                match[(n + 1) / 6][i - (n * 20) + 1][1] = n + 1;
+               
+                
             }
-
+            
         }
+         match[(n + 1)] = p2;
     }
 
     for (int n = 0; n < 6;n++) {
@@ -857,11 +885,13 @@ int main() {
             //  std::cout << angle;
             //  cv::Point2f offset_0(-400, -200);
             //  move_to(vector1, offset_0);
-            int p3 = match[n][p2][0];
-            int n1 = match[n][p2][1];
-            std::cout << p3 << "\n";
+            int g1 = match[n * 4 + p2];
+            // int p3 = match[n*4+p2]- n1*4;
+            // int n1 = match[24] / 4;
+            int n1 = g1 /4;
+            int p3 = g1 %4+1;
             std::cout << n1 << "\n";
-            
+            std::cout << p3 << "\n";
           
             std::string o2 = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(n1);
             o2 += "_o" + std::to_string(p3) + ".txt";
@@ -871,12 +901,15 @@ int main() {
             a2 += "_a" + std::to_string(p3) + ".txt";
             std::vector<cv::Point2f> vector2 = read_vector(input2_txt_path);
             cv::Point2f offset2 = read_point_from_txt(o2);
-          //  double angle2 = double(read_float_from_txt(a2));
-          // move_to(vector2, offset2);
-           // rotatePointsByAngle(vector2, angle2);
-          //  std::vector<cv::Point2f> vector3 = combineVectors(vector1, vector2);
-          //  displayPoints(vector3);
+           double angle2 = double(read_float_from_txt(a2));
+           move_to(vector2, offset2);
+            rotatePointsByAngle(vector2, angle2);
+            std::vector<cv::Point2f> vector3 = combineVectors(vector1, vector2);
+            cv::Point2f offset3(-500, -300);
+            move_to(vector3, offset3);
+           displayPoints(vector3);
         }
     }
+    */
     return 0;
 }
