@@ -197,6 +197,7 @@ int main(){
             reformed_corners[i] = white_pixels[closest];
             points[i] = closest;
         }
+        /*
         std::vector<int> vertices(white_pixels.size());
         for (int i = 0; i < white_pixels.size(); i++) {
             float smallest = INT_MAX;
@@ -207,6 +208,7 @@ int main(){
                 }
             }
         }
+        */
 
 
         /*
@@ -242,7 +244,7 @@ int main(){
 
 
 
-        status(step, "Calculated verticies table");
+        //status(step, "Calculated verticies table");
 
 
 
@@ -253,13 +255,13 @@ int main(){
             cv::circle(img_with_points2, reformed_corners[i], 10, cv::Scalar(255, 255, 255), -1);
             //  std::cout << reformed_corners[i].y << "\n" << reformed_corners[i].x << "\n";
         }
-        cv::Mat img(512, 512, CV_8U);
-        for (int i = 0; i < white_pixels.size() - 1; i++) {
-            cv::line(img, white_pixels[i], white_pixels[vertices[i]], cv::Scalar(255, 0, 0), 1);
+     //   cv::Mat img(512, 512, CV_8U);
+     //   for (int i = 0; i < white_pixels.size() - 1; i++) {
+       //     cv::line(img, white_pixels[i], white_pixels[vertices[i]], cv::Scalar(255, 0, 0), 1);
             // cv::line(img, reorderedPoints[i], reorderedPoints[i+1], cv::Scalar(255, 0, 0), 1);
-        }
-        cv::imshow("bullshit", img);
-        cv::waitKey(0);
+       // } 
+        //cv::imshow("bullshit", img);
+        //cv::waitKey(0);
 
         int ref[5] = { 0, 1, 2, 3, 0 };
         double angle_min[4];
@@ -300,11 +302,11 @@ int main(){
         for (auto const& point : white_pixels) {
             output_file << point.x << " " << point.y << std::endl;
         }
-       
-        std::vector<cv::Point2f> side0;
-        std::vector<cv::Point2f> side1;
-        std::vector<cv::Point2f> side2;
-        std::vector<cv::Point2f> side3;
+        std::vector<std::vector<cv::Point2f>> sides(4);
+       // std::vector<cv::Point2f> side0;
+       // std::vector<cv::Point2f> side1;
+       // std::vector<cv::Point2f> side2;
+       // std::vector<cv::Point2f> side3;
 
 
         for (int i = 0; i < 4; i++) {
@@ -314,62 +316,65 @@ int main(){
               
                
                 if ((angle1 > angle_min[i] && angle1 < angle_max[i] && i!=1) || (i==1 && (angle1 < angle_min[i] || angle1 > angle_max[i]))) {
-                  
-                    if (i == 0) {
-                        side0.push_back(white_pixels[j]);
-                    }
-                    if (i == 1) {
-                        side1.push_back(white_pixels[j]);
-                    }
-                    if (i == 2) {
-                        side2.push_back(white_pixels[j]);
-                    }
-                    if (i == 3) {
-                        side3.push_back(white_pixels[j]);
-                    } 
+                   
+                    sides[i].push_back(white_pixels[j]);
+                   //if (i == 0) {
+                   //    side0.push_back(white_pixels[j]);  
+                   //}
+                   //if (i == 1) {
+                   //    side1.push_back(white_pixels[j]);
+                   // }
+                   // if (i == 2) {
+                   //     side2.push_back(white_pixels[j]);
+                   // }
+                   // if (i == 3) {
+                   //     side3.push_back(white_pixels[j]);
+                   //  } 
                    // std::cout << white_pixels[j] << "\n";
                  
                 
                 }
             }
+            //std::cout << "i Work"  << std::endl;
         }
-        std::ofstream output_file0;
-        output_file0.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_0.txt");
-        for (auto const& point : side0) {
-            output_file0 << point.x << " " << point.y << std::endl;
+        for (int k = 0; k < 4; k++) {
+            std::ofstream output_file0;
+            output_file0.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_" + std::to_string(k) + ".txt");
+            for (auto const& point : sides[k]) {
+                output_file0 << point.x << " " << point.y << std::endl;
+            }
+            /* std::ofstream output_file1;
+             output_file1.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_1.txt");
+             for (auto const& point : side1) {
+                 output_file1 << point.x << " " << point.y << std::endl;
+             }
+             std::ofstream output_file2;
+             output_file2.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_2.txt");
+             for (auto const& point : side2) {
+                 output_file2 << point.x << " " << point.y << std::endl;
+             }
+             std::ofstream output_file3;
+             output_file3.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_3.txt");
+             for (auto const& point : side3) {
+                 output_file3 << point.x << " " << point.y << std::endl;
+             }*/
         }
-        std::ofstream output_file1;
-        output_file1.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_1.txt");
-        for (auto const& point : side1) {
-            output_file1 << point.x << " " << point.y << std::endl;
-        }
-        std::ofstream output_file2;
-        output_file2.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_2.txt");
-        for (auto const& point : side2) {
-            output_file2 << point.x << " " << point.y << std::endl;
-        }
-        std::ofstream output_file3;
-        output_file3.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_3.txt");
-        for (auto const& point : side3) {
-            output_file3 << point.x << " " << point.y << std::endl;
-        }
-  
             status(step, "Order by angle");
    
 
         int treshold=50;
         int treshold2=100;
-      
-        std::vector<cv::Point2f> sides_20;
-        std::vector<cv::Point2f> sides_21;
-        std::vector<cv::Point2f> sides_22;
-        std::vector<cv::Point2f> sides_23;
+        std::vector <std::vector<cv::Point2f>> sides_2(4);
+        // std::vector<cv::Point2f> sides_20;
+        //std::vector<cv::Point2f> sides_21;
+        //std::vector<cv::Point2f> sides_22;
+        //std::vector<cv::Point2f> sides_23;
         for (int j = 0; j < 4; j++) {
             int p = 0;
             int k = 1; 
            // std::cout << side0.size() << std::endl;
           
-            std::vector<cv::Point2f> side;
+           /*/ std::vector<cv::Point2f> side;
             if (j == 0) {
                 for (int k = 0; k < side0.size(); k++) {
                     side.push_back(side0[k]);
@@ -396,7 +401,7 @@ int main(){
                    // std::cout << side3[k] << "\n";
                 }
               //  std::cout << 3 << "\n";
-            }
+            }*/
             cv::Point2f  ref;
             cv::Point2f  ref1;
            
@@ -410,14 +415,15 @@ int main(){
               
                 double smallest = INT_MAX;
 
-                for (int i = 0; i < side.size(); i++) {
+                for (int i = 0; i < sides[j].size(); i++) {
                   //  std::cout << side[i].x << side[i].y << std::endl;
-                    double d1 = cv::norm(side[i] - ref);
+                    double d1 = cv::norm(sides[j][i] - ref);
                   
                  
                     if (d1 < treshold && i > 0) {
-                       
-                        if (j == 0 ) {
+                        sides_2[j].push_back(sides[j][i]);
+                        sides[j].erase(sides[j].begin() + i);
+                     /*   if (j == 0) {
                             sides_20.push_back(side[i]);
                             side.erase(side.begin() + i);
                             side0.erase(side0.begin() + i);
@@ -437,12 +443,12 @@ int main(){
                             sides_23.push_back(side[i]);
                             side.erase(side.begin() + i);
                             side3.erase(side3.begin() + i);
-                        }
+                        }*/
                       i=0;
                     }
                     if ( d1 < smallest && d1 < treshold2 && i > 0) { 
 
-                        ref1 = side[i];
+                        ref1 = sides[j][i];
                         smallest = d1;
                         k = 1;
                         p = 1; 
@@ -453,12 +459,15 @@ int main(){
 
             }
         }
-        std::ofstream output_file01;
-        output_file01.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_01.txt");
-        for (auto const& point : sides_20) {
-            output_file01 << point.x << " " << point.y << std::endl;
+        for (int k = 0; k < 4; k++) {
+            std::ofstream output_file0;
+            output_file0.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_" + std::to_string(k) + "1.txt");
+
+            for (auto const& point : sides_2[k]) {
+                output_file0 << point.x << " " << point.y << std::endl;
+            }
         }
-        std::ofstream output_file11;
+       /* std::ofstream output_file11;
         output_file11.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_11.txt");
         for (auto const& point : sides_21) {
             output_file11 << point.x << " " << point.y << std::endl;
@@ -472,109 +481,127 @@ int main(){
         output_file31.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_31.txt");
         for (auto const& point : sides_23) {
             output_file31 << point.x << " " << point.y << std::endl;
-        }
+        }*/
       
         status(step, "Isolate clusters");
          int size;
         int comb[4];
       
         for (int j = 0; j < 4; j++) {
-           
-            std::vector<cv::Point2f> side;
-            if (j == 0) {
-                for (int k = 0; k < side0.size(); k++) {
-                    side.push_back(side0[k]);
-                }
-               
-                size = sides_20.size();
-             //   for (int k = 0; k < sides_20.size(); k++) {
-             //       side_2.push_back(sides_20[k]);
-                //}
-              
-            }
-            if (j == 1) {
-            
-                for (int k = 0; k < side1.size(); k++) {
-                    side.push_back(side1[k]);
-                }
 
-               size = sides_21.size();
+            /*   std::vector<cv::Point2f> side;
+               if (j == 0) {
+                   for (int k = 0; k < side0.size(); k++) {
+                       side.push_back(side0[k]);
+                   }
 
-             //  for (int k = 0; k < sides_21.size(); k++) {
-             //      side_2.push_back(sides_21[k]);
-             //  }
+                   size = sides_20.size();
+                //   for (int k = 0; k < sides_20.size(); k++) {
+                //       side_2.push_back(sides_20[k]);
+                   //}
 
-            }
-            if (j == 2) {
-           
-                for (int k = 0; k < side2.size(); k++) {
-                    side.push_back(side2[k]);
-                }
+               }
+               if (j == 1) {
 
-                size = sides_22.size();
+                   for (int k = 0; k < side1.size(); k++) {
+                       side.push_back(side1[k]);
+                   }
 
-             //   for (int k = 0; k < sides_22.size(); k++) {
-             //       side_2.push_back(sides_22[k]);
-             //   }
+                  size = sides_21.size();
 
-            }
-            if (j == 3) {
-          
-                for (int k = 0; k < side3.size(); k++) {
-                    side.push_back(side3[k]);
-                }
+                //  for (int k = 0; k < sides_21.size(); k++) {
+                //      side_2.push_back(sides_21[k]);
+                //  }
 
-               size = sides_23.size();
- 
-             //  for (int k = 0; k < sides_23.size(); k++) {
-              //     side_2.push_back(sides_23[k]);
-              // }
+               }
+               if (j == 2) {
 
-            }
-            std::cout << side.size() << std::endl;
-            if (side.size() !=1) {
-                
+                   for (int k = 0; k < side2.size(); k++) {
+                       side.push_back(side2[k]);
+                   }
+
+                   size = sides_22.size();
+
+                //   for (int k = 0; k < sides_22.size(); k++) {
+                //       side_2.push_back(sides_22[k]);
+                //   }
+
+               }
+               if (j == 3) {
+
+                   for (int k = 0; k < side3.size(); k++) {
+                       side.push_back(side3[k]);
+                   }
+
+                  size = sides_23.size();
+
+                //  for (int k = 0; k < sides_23.size(); k++) {
+                 //     side_2.push_back(sides_23[k]);
+                 // }
+
+               } */
+               // std::cout << sides[j].size() << std::endl;
+            if (sides[j].size() > 1) {
+
+
                 for (int i = 0; i < 4; i++) {
-                    std::vector<cv::Point2f> side_2;
-                    double smallest = INT_MAX;  
-                    if (j == 0) {
-                        for (int k = 0; k < sides_20.size(); k++) {
-                            side_2.push_back(sides_20[k]);
-                        }
-                    }
-                    if (j == 1) {
-                        for (int k = 0; k < sides_21.size(); k++) {
-                            side_2.push_back(sides_21[k]);
-                        }
-                    }
-                    if (j == 2) {
-                        for (int k = 0; k < sides_22.size(); k++) {
-                            side_2.push_back(sides_22[k]);
-                        }
-                    }
-                    if (j == 3) {
-                        for (int k = 0; k < sides_23.size(); k++) {
-                            side_2.push_back(sides_23[k]);
-                        }
-                    }
+                    // std::vector<cv::Point2f> side_2;
+                    double smallest = INT_MAX;
+                    /*  if (j == 0) {
+                         for (int k = 0; k < sides_20.size(); k++) {
+                             side_2.push_back(sides_20[k]);
+                         }
+                     }
+                     if (j == 1) {
+                         for (int k = 0; k < sides_21.size(); k++) {
+                             side_2.push_back(sides_21[k]);
+                         }
+                     }
+                     if (j == 2) {
+                         for (int k = 0; k < sides_22.size(); k++) {
+                             side_2.push_back(sides_22[k]);
+                         }
+                     }
+                     if (j == 3) {
+                         for (int k = 0; k < sides_23.size(); k++) {
+                             side_2.push_back(sides_23[k]);
+                         }
+                     }  */
                     if (j != i) {
-                        for (int k = 0; k < size; k++) {
+                        for (int k = 1; k < sides_2[i].size(); k++) {
 
-                            double d1 = cv::norm(side_2[k] - side[1]);
+
+                            double d1 = cv::norm(sides_2[i][k] - sides[j][1]);
                             if (d1 < smallest) {
                                 smallest = d1;
                                 comb[j] = i;
                             }
+
+
                         }
                     }
                 }
             }
             else {
                 comb[j] = 5;
-            }
+            }             
         }
         for (int j = 0; j < 4; j++) {
-             std::cout << comb[j] << std::endl;
+            std::cout << comb[j] << std::endl;
+        }
+        for (int j = 0; j < 4; j++) {
+            for (int i = 0; i < 4; i++) {
+                if (comb[j] == i) {
+                    for (int k = 1; k < sides[j].size(); k++) {
+                        sides_2[i].push_back(sides[j][k]);
+                    }
+                }
+            }
+        }
+        
+        
+
+             /*
             if (j == 0) {
                 if (comb[j] == 0) {
                     for (int k = 1; k < side0.size(); k++) {
@@ -667,10 +694,15 @@ int main(){
                 }
                 if (comb[j] == 5)   std::cout << "-----" << std::endl;
             }
-        }
+        }*/
+        for(int k = 0; k <4;k++){
         std::ofstream output_file02;
-        output_file02.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_01.txt");
-        for (auto const& point : sides_20) {
+        output_file02.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_" + std::to_string(k) +"1.txt");
+        for (auto const& point : sides_2[k]) {
+            output_file02 << point.x << " " << point.y << std::endl;
+        }
+        }
+      /*  for (auto const& point : sides_20) {
             output_file02 << point.x << " " << point.y << std::endl;
         }
         std::ofstream output_file12;
@@ -687,15 +719,41 @@ int main(){
         output_file32.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_31.txt");
         for (auto const& point : sides_23) {
             output_file32 << point.x << " " << point.y << std::endl;
+        }  */
+        status(step, "Match clusters");
+        
+        std::vector <std::vector<float>> normal_diviation(4);
+        for (int k = 0; k < 4; k++) {
+        for (int i = 0; i < sides_2[k].size(); i++) {
+            float point_distance = cv::norm(reformed_corners[k] - sides_2[k][i]);
+            if (k != 3){
+                float angle = atan2(reformed_corners[k].x-sides_2[k][i].x, reformed_corners[k].y - sides_2[k][i].y) - atan2(reformed_corners[k].x-reformed_corners[k + 1].x, reformed_corners[k].y - reformed_corners[k + 1].y);
+            }
+            else {
+                float angle = atan2(reformed_corners[k].x-sides_2[k][i].x, reformed_corners[k].y - sides_2[k][i].y) - atan2(reformed_corners[k].x-reformed_corners[0].x, reformed_corners[k].y - reformed_corners[0].y);
+            }
+            normal_diviation[k].push_back(point_distance * sin(angle));
         }
+        }
+        status(step, "Claculated normal diviation");
+        for (int k = 0; k < 4; k++) {
+            std::ofstream output_file32;
+            output_file32.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_normalDiviation_" + std::to_string(k) + ".txt");
+            for (auto const& point : normal_diviation[k]) {
+                output_file32 << point << std::endl;
+            }
+            output_file32.close();
+        }
+        status(step, "wrote normal diviation to file");
 
-         status(step, "Match clusters");
-         status(step, "displayed vector sides_2");
+         
+        
 
         cv::Mat resized_img;
         cv::resize(img_with_points2, resized_img, cv::Size((194 * 3), (259 * 3)));
         cv::imshow("Points", resized_img);
         cv::waitKey(0);
+         status(step, "displayed vector sides_2");
     }
     return 0;
 }
