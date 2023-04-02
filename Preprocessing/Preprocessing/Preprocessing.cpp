@@ -82,18 +82,92 @@ bool doIntersect(cv::Point2f p1, cv::Point2f q1, cv::Point2f p2, cv::Point2f q2)
 
   return false; // Doesn't fall in any of the above cases
 }
-double compareSide(std::vector<cv::Point2f> v1,std::vector<cv::Point2f> v2, float treshold, float samples) {
-    float s_v1 = (float)v1.size() / samples;
+double compareSide(std::vector<cv::Point2f> v1,std::vector<cv::Point2f> v2, float samples) {
+
+    float l_v1 = (v1[v1.size() - 1].y - v1[0].y) / samples;
+    float l_v2 = (v2[v2.size() - 1].y - v2[0].y) / samples;
+    float diff = abs(l_v1 - l_v2) * 500;
+    std::vector <float> n_v1;
+    std::vector <float> n_v2;
+    
+ 
+    float sum = 0;
+    int last_break = 0;
+    int local = 0;
+    for (int j = 1; j <= samples; j++) {
+        last_break = 0;
+        for (int i = local; i < v1.size(); i++) {
+            if (l_v1*(j-1) <= v1[i].y && v1[i].y < l_v1 * j) {
+                last_break++;
+                local = i;
+                sum += v1[i].x;
+            }
+            if (v1[i].y > l_v1 * j)
+                break;
+        }
+        n_v1.push_back(sum / (float)(last_break));
+        sum = 0;
+    }
+
+   
+    sum = 0;
+    local = 0;
+    for (int j = 1; j <= samples; j++) {
+        last_break = 0;
+        for (int i = local; i < v2.size(); i++) {
+            if (l_v2 * (j - 1) <= v2[i].y && v2[i].y < l_v2 * j) {
+                sum += v2[i].x;
+                local = i;
+                last_break++;
+            }
+            if (v2[i].y > l_v2 * j)
+                break;
+        }
+        n_v2.push_back(sum / (float)(last_break));
+        sum = 0;
+    }
+   // std::cout << "n_v1, n_v2, SAMPLES" << n_v1.size() << ", " << n_v1.size() << ", " << samples << "\n";
+    float error = 0;
+    for (int i = 0; i < samples; i++) {
+        if(n_v1[i] == n_v1[i] && n_v2[samples - 1 - i] == n_v2[samples - 1 - i])
+        error += n_v1[i] + n_v2[samples -1 - i];
+    }
+   // std::cout << "it do be comparing mate" << "\n";
+    return abs(error*(1/(1+diff)));
+
+    /*float s_v1 = (float)v1.size() / samples;
     float s_v2 = (float)v2.size() / samples;
     std::vector <float> n_v1;
     std::vector <float> n_v2;
     
+    for (int i = 0; i < v1.size(); i++) {
+        sum += v1[i].x;
+        if (l_v1 <= (v1[i].y - v1[last_break].y)) {
+            n_v1.push_back(sum / (float)(i - last_break));
+            last_break = i;
+            sum = 0;
+        }
+    }
+    
+
+   
+    sum = 0;
+    last_break = 0;
+
+    for (int i = 0; i < v2.size(); i++) {
+        sum += v2[i].x;
+        if (l_v2 <= (v2[i].y - v2[last_break].y)) {
+            n_v2.push_back(sum / (float)(i - last_break));
+            last_break = i;
+            sum = 0;
+        }
+    }
     
     float sum = 0;
     int last_break = 0;
     for (int i = 0; i < v1.size(); i++){
         sum += v1[i].x;
-        if (i >= s_v1){
+        if ((float)(i - last_break) >= s_v1){
             n_v1.push_back(sum / (float)(i - last_break));
             sum = 0;
             last_break = i;
@@ -101,7 +175,7 @@ double compareSide(std::vector<cv::Point2f> v1,std::vector<cv::Point2f> v2, floa
     }
     for (int i = 0; i < v2.size(); i++){
         sum += v2[i].x;
-        if (i >= s_v2){
+        if ((float)(i - last_break) >= s_v2){
             n_v2.push_back(sum / (float)(i - last_break));
             sum = 0;
             last_break = i;
@@ -111,17 +185,9 @@ double compareSide(std::vector<cv::Point2f> v1,std::vector<cv::Point2f> v2, floa
     float error = 0;
     for (int i = 0; i < samples; i++) {
         error += n_v1[i] + n_v2[samples - i];
-    }
+    }*/
     
-    return error;
-    /*
-    if (error < treshold) {
-        return true;
-    }
-    else {
-        return false;
-    } 
-    */
+
 
     
 }
@@ -133,112 +199,124 @@ bool isFlat(std::vector < std::vector < float >> flat, int piece, int side, floa
     return false;
   }
 }
-std::vector<std::vector<int>> findBestMatch(std::vector<std::vector<std::vector<cv::Point2f>>> puzzle, int piece, int side, int num, bool flat[70][4],std::vector<int> used) {
+/*
+std::vector<std::vector<int>> findBestMatch(std::vector<std::vector<std::vector<cv::Point2f>>> puzzle, int piece, int side, int num, bool flat[70][4]) {
+    std::vector<cv::Point2f> base = puzzle[piece][side];
+    std::vector<std::vector<int>> match;
+    float small = (float)INT_MAX;
+    if (flat[piece][side]) {
+        std::vector<std::vector<int>> issue;
+        issue.push_back(std::vector<int>(piece, side));
+        return  issue;
+    }
+    for (int n = 0; n < puzzle.size(); n++) {
+        for (int i = 0; i < puzzle[n].size(); i++) {
+            if (flat[n][i]) {
+
+            }
+            else {
+                float error = compareSide(base, puzzle[n][i], 700);
+                std::cout << "hello1" << "\n";
+                if (error < small) {
+                    small = error;
+                    std::cout << "gelolo2" << "\n";
+                    if (match.size() > num)
+                    match.erase(match.begin() + 0);
+                    match.push_back(std::vector<int>(n, i));
+                    std::cout << "galo3" << "\n";
+                }
+            }
+        }
+    }
+    return match;
+}*/
+std::vector<std::vector<int>> findBestMatch(std::vector<std::vector<std::vector<cv::Point2f>>> puzzle, int piece, int side, int num, bool flat[70][4], std::vector<int> used) {
     std::cout << "piece-" << piece << "\n";
     std::cout << "side-" << side << "\n";
     std::vector<cv::Point2f> base = puzzle[piece][side];
 
     std::vector<std::vector<int>> match(num);
-  std::vector<float> small;
+    std::vector<float> small; //= (float)INT_MAX;
 
-  for (int i = 0; i < num; i++) {
-    small.push_back(INT_MAX);
-    //std::cout << "max" << "\n";
-  
-  }
-  if (flat[piece][side]) {
+    for (int i = 0; i < num; i++) {
+       small.push_back(INT_MAX);
+        //std::cout << "max" << "\n";
 
-      std::vector<std::vector<int>> issue;
-      issue.push_back(std::vector<int>(piece, side));
-      return  issue;
- 
-  } 
-  std::cout << used.size() << "\n";
-  for (int j = 0; j < num; j++) {
-      for (int n = 0; n < puzzle.size(); n++) {
-
-          for (int i = 0; i < puzzle[n].size(); i++) {
-              if (flat[n][i] || piece == n) {
-
-              }
-              else {
-
-                  float error = compareSide(base, puzzle[n][i], 1, 500);
-
-                  std::vector<int> k;
-                  int p = 0;
-                  for (int l = 0; l < num; l++) {
-                      if (error == small[l])
-                          p = 1;
-                  }
-                  for (int f = 0; f < used.size(); f++) {
-                  
-                      if (n == used[f]) {
-                         p = 1; 
-                        // std::cout << used[f] << "\n";
-                      }
-                  }
-                    if (error < small[j] && p !=1) {
-
-                        // small.erase(small.begin() + j);
-                        //  small.push_back(error);
-                        // match.erase(match.begin() + j);
-                        small[j] = error;
-                        k.push_back(n);
-                        k.push_back(i);
-                        match[j] = k;
-                        // match.push_back(k);
-                        
-                    }
-              }
-              
-          }
-      }
-      std::cout << "piece------" << match[j][0] << "\n";
-      std::cout << "side-----" << match[j][1] << "\n";
-      std::cout << "------" << "\n";
-  }
-  std::cout << "ok" << "\n";
-  return match;
-}/*
-std::vector<std::vector<cv::Point2f>> displayBest(std::vector < std::vector < cv::Point2f>> master_white_pixels, std::vector < std::vector < cv::Point2f >> masterCorner,int array[10][7][5]) {
-    int k = 0;
-    for (int x = 0; x < 10; x++) {
-        for (int y = 0; y < 7; y++) {
-            if (k == 0) {
-                for (int i = 0; i < master_white_pixels[array[x][y][0]].size(); i++) {
-                    master_white_pixels[array[x][y][4]][i].x = master_white_pixels[array[x][y][4]][i].x - masterCorner[array[x][y][4]][array[x][y][1]].x;
-                    master_white_pixels[array[x][y][4]][i].y = master_white_pixels[array[x][y][4]][i].y - masterCorner[array[x][y][4]][array[x][y][1]].y;
-                }
-                for (int i = 0; i < 4; i++) {
-                    double offsetx = masterCorner[array[x][y][4]][array[x][y][1]].x;
-                    double offsety = masterCorner[array[x][y][4]][array[x][y][1]].y;
-                    masterCorner[array[x][y][4]][i].x = masterCorner[array[x][y][4]][i].x - offsetx;
-                    masterCorner[array[x][y][4]][i].y = masterCorner[array[x][y][4]][i].y - offsety;
-                }
-                double angle = array[x][y][0] * CV_PI / 2;
-                for (int i = 0; i < master_white_pixels[array[x][y][0]].size(); i++) {
-                    double x1 = master_white_pixels[array[x][y][0]][i].x;
-                    double y1 = master_white_pixels[array[x][y][0]][i].y;
-                master_white_pixels[array[x][y][0]][i].x = x1 * cos(angle) - y1 * sin(angle);
-                master_white_pixels[array[x][y][0]][i].y = x1 * sin(angle) + y1 * cos(angle);
-
-                }
-                for (int i = 0; i < 4; i++) {
-                    double x1 = masterCorner[array[x][y][0]][array[x][y][1]].x;
-                    double y1 = masterCorner[array[x][y][0]][array[x][y][1]].y;
-                    masterCorner[array[x][y][0]][array[x][y][1]].x = x1 * cos(angle) - y1 * sin(angle);
-                    masterCorner[array[x][y][0]][array[x][y][1]].y = x1 * sin(angle) + y1 * cos(angle);
-                } 
-                k = 1;
-            }
-            else {
-
-            }
-
-        }
     }
-}*/
+    if (flat[piece][side]) {
+
+        std::vector<std::vector<int>> issue;
+        issue.push_back(std::vector<int>(piece, side));
+        std::cout << "ITS FYCKING FLAT" << std::endl;
+        return  issue;
+
+
+    }
+    std::cout << used.size() << "\n";
+    for (int j = 0; j < num; j++) {
+        for (int n = 0; n < puzzle.size(); n++) {
+
+            for (int i = 0; i < puzzle[n].size(); i++) {
+                if (flat[n][i] || piece == n) {
+
+                }
+                else {
+                    //   std::cout << "aint it cimpare" << "\n";
+                    float error =compareSide(base, puzzle[n][i], 100);
+                     //std::cout << error << std::endl;
+                      std::vector<int> k;
+                    int p = 0;
+                    
+                    for (int l = 0; l < num; l++) {
+                        if (error == small[l])
+                            p = 1;
+                    }
+                    
+                    for (int f = 0; f < used.size(); f++) {
+
+                        if (n == used[f]) {
+                            p = 1;
+                            // std::cout << used[f] << "\n";
+                        }
+                    }
+                    if (error < small[j] && p != 1) {
+
+                        //small.erase(small.begin() + 0);
+                        //small.push_back(error);
+                        small[j] = error;
+                     //   if (match.size() > num)
+                      //      match.erase(match.begin() + 0);
+                      //  match.push_back(std::vector<int>(n, i));
+
+                        // small[j] = error;
+                         k.push_back(n);
+                         k.push_back(i);
+                         match[j] = k;
+
+                    }
+                }
+            }
+        }
+        std::cout << "------" << "\n";
+
+        //  std::cout << "piece------" << match[j][0] << "\n";
+         // std::cout << "side-----" << match[j][1] << "\n";
+
+    }
+    std::cout << match.size() << std::endl;
+    //std::cout << match[1].size() << std::endl;
+    std::cout << "ok" << "\n";
+    //for (int i = 0; i < match.size(); i++) {
+    //  for (int j = 0; j < match[i].size(); j++) {
+   //       std::cout << match[i][j] << std::endl; 
+   //   }
+   // }
+  //  for (int q = 0; q < match.size(); q++) {
+ //     std::cout << "Match rank:" << match.size() - q << "\t Piece:" << match[q][0] << "\t Side:" << match[q][1] << "\n";
+ // }
+
+  return match;
+}
 void gridDisplay(std::vector<std::vector < cv::Point2f>> master_white_pixels, int array[10][7][5]) {
   std::vector <cv::Point2f> image;
   for (int x = 0; x < 10; x++) {
@@ -247,6 +325,7 @@ void gridDisplay(std::vector<std::vector < cv::Point2f>> master_white_pixels, in
         float angle = CV_PI / 2 * array[x][y][0];
         float x1 = master_white_pixels[array[x][y][4]][count].x;
         float y1 = master_white_pixels[array[x][y][4]][count].y;
+        if (array[x][y][4] != -1)
         image.push_back(cv::Point2f((x1 * cos(angle) - y1 * sin(angle)) + (float)(x * 600) + 600.0, (x1 * sin(angle) + y1 * cos(angle)) + (float)(y * 600) + 600.0));
       }
     }
@@ -303,7 +382,7 @@ std::vector<float> read_float(const std::string& filename) {
 
 int x_sum;
 int y_sum;
-bool write = true;
+bool write = false;
 int main() {
     std::string state;
     std::cin >> state;
@@ -314,9 +393,9 @@ int main() {
     std::vector < std::vector < cv::Point2f>> master_white_pixels;
 
     int step = 0;
-    //
+    
     status(step, "Initilized code");
-    for (int n = 51; n <= number_of_pieces && state == "w"; n++) {
+    for (int n = 1; n <= number_of_pieces && state == "w"; n++) {
         std::vector < std::vector < cv::Point2f >> normal_diviation(4);
         std::vector < std::vector < cv::Point2f >> sorted_diviation(4);
         std::string imagePath = "C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(n) + ".jpg";
@@ -354,11 +433,6 @@ int main() {
         int scale = 1;
         int delta = 0;
         int ddepth = CV_16S;
-        //Sobel(image, grad_x, ddepth, 1, 0, 3, scale, delta, cv::BORDER_REPLICATE);
-        //Sobel(image, grad_y, ddepth, 0, 1, 3, scale, delta, cv::BORDER_REPLICATE);
-        //convertScaleAbs(grad_x, abs_grad_x);
-        //convertScaleAbs(grad_y, abs_grad_y);
-        //addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, image);
         cv::Mat kernel2 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(4, 4));
         cv::morphologyEx(image, image, cv::MORPH_GRADIENT, kernel2);
         status(step, "Sobel function ran on:" + imagePath);
@@ -458,7 +532,7 @@ int main() {
 
         for (int i = 0; i < white_pixels.size(); i++) {
             cv::Point2f zero(0, 0);
-            cv::circle(img_with_points2, zero, 10, cv::Scalar(255, 255, 255), -1);
+            cv::circle(img_with_points2, middle, 10, cv::Scalar(255, 255, 255), -1);
             cv::circle(img_with_points2, white_pixels[i], 1, cv::Scalar(255, 255, 255), -1);
         }
 
@@ -493,6 +567,7 @@ int main() {
                 }
             }
             reformed_corners[i] = white_pixels[closest];
+
             points[i] = closest;
         }
 
@@ -536,7 +611,7 @@ int main() {
             for (int j = 0; j < white_pixels.size(); j++) {
                 double angle1 = atan2(white_pixels[j].y, white_pixels[j].x);
 
-                if ((angle1 > angle_min[i] && angle1 < angle_max[i] && i != 1) || (i == 1 && (angle1 < angle_min[i] || angle1 > angle_max[i]))) {
+                if ((angle1 >= angle_min[i] && angle1 <= angle_max[i] && i != 1) || (i == 1 && (angle1 <= angle_min[i] || angle1 >= angle_max[i]))) {
 
                     sides[i].push_back(white_pixels[j]);
 
@@ -544,7 +619,12 @@ int main() {
             }
 
         }
-        status(step, "Order by angle");
+        status(step, "Ordered by angle");
+        std::vector < std::vector < cv::Point2f >> sides_2(4);
+
+        int treshold = 5;
+
+        //  int treshold2 = 170;
         if (write) {
             for (int k = 0; k < 4; k++) {
                 std::ofstream output_file0;
@@ -556,99 +636,92 @@ int main() {
             }
             status(step, "Wrote vectors to file");
         }
-        int treshold = 40;
-        int treshold2 = 170;
-        std::vector < std::vector < cv::Point2f >> sides_2(4);
 
         for (int j = 0; j < 4; j++) {
             int p = 0;
             int k = 1;
 
-            cv::Point2f ref;
             cv::Point2f ref1;
+            cv::Point2f ref2;
 
             while (k != 0) {
                 k = 0;
 
-                ref = ref1;
+                ref1 = ref2;
                 if (p == 0) {
-                    ref = reformed_corners[j];
+                    ref1 = reformed_corners[j];
+                    p = 1;
                 }
 
                 double smallest = INT_MAX;
 
                 for (int i = 0; i < sides[j].size(); i++) {
 
-                    double d1 = cv::norm(sides[j][i] - ref);
+                    double d1 = cv::norm(sides[j][i] - ref1);
 
                     if (d1 < treshold && i > 0) {
+                        if (sides[j][i] == reformed_corners[ref[j + 1]]) {
+
+                            k = 0;
+                            break;
+                        }
                         sides_2[j].push_back(sides[j][i]);
                         sides[j].erase(sides[j].begin() + i);
                         i = 0;
-                    }
-                    if (d1 < smallest && d1 < treshold2 && i > 0) {
 
-                        ref1 = sides[j][i];
+                    }
+                    if (d1 < smallest && i > 0) {
+
+                        ref2 = sides[j][i];
                         smallest = d1;
                         k = 1;
-                        p = 1;
+
                     }
 
+
                 }
 
             }
         }
-        status(step, "Isolate clusters");
-        if (write) {
-            for (int k = 0; k < 4; k++) {
-                std::ofstream output_file0;
-                output_file0.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_" + std::to_string(k) + "1.txt");
 
-                for (auto
-                    const& point : sides_2[k]) {
-                    output_file0 << point.x << " " << point.y << std::endl;
+
+
+
+        status(step, "Isolated clusters");
+        std::vector<std::vector<cv::Point2f>> sides1(4);
+        std::vector<std::vector<cv::Point2f>> sides2(4);
+        for (int i = 0; i < 4; i++) {
+            float x1 = reformed_corners[i].x;
+            float y1 = reformed_corners[i].y;
+            double a1 = -CV_PI / 2 + CV_PI / 2 * ((i + 2) % 4);
+            double a2 = atan2(y1, x1);
+
+            for (int j = 0; j < sides[i].size() && sides[i].size()>1; j++) {
+                double angle2 = atan2(sides[i][j].y, sides[i][j].x);
+                if (angle2<a1 && angle2>a2) {
+                    sides1[i].push_back(sides[i][j]);
                 }
-            }
-            status(step, "Wrote vectors to file");
-        }
-        int size = 0;
-        int comb[4];
-
-        for (int j = 0; j < 4; j++) {
-
-            if (sides[j].size() > 1) {
-                double smallest = INT_MAX;
-                for (int i = 0; i < 4; i++) {
-
-                    if (i != j) {
-                        for (int k = 1; k < sides_2[i].size(); k++) {
-
-                            double d1 = cv::norm(sides_2[i][k] - sides[j][1]);
-                            if (d1 < smallest) {
-
-                                smallest = d1;
-                                comb[j] = i;
-                                
-                            }
-
-                        }
-                    }
-                }
-            }
-            else {
-                comb[j] = 5;
-            }
-            std::cout << comb[j] << std::endl;
-        }
-        for (int j = 0; j < 4; j++) {
-            for (int i = 0; i < 4; i++) {
-                if (comb[j] == i) {
-                    for (int k = 1; k < sides[j].size(); k++) {
-                        sides_2[i].push_back(sides[j][k]);
-                    }
+                else {
+                    sides2[i].push_back(sides[i][j]);
                 }
             }
         }
+
+        status(step, "Seperated clusters");
+        for (int i = 0; i < 4; i++) {
+
+            for (int j = 0; j < sides1[i].size() && sides1[i].size()>1; j++) {
+                sides_2[(i + 3) % 4].push_back(sides1[i][j]);
+            }
+            for (int k = 0; k < sides2[i].size() && sides2[i].size()>1; k++) {
+                sides_2[(i + 1) % 4].push_back(sides2[i][k]);
+            }
+        }
+        status(step, "Combined vectors");
+
+
+
+
 
         status(step, "Matched clusters");
         if (write) {
@@ -680,8 +753,8 @@ int main() {
                 else {
                     normal_diviation[k].push_back(cv::Point2f(-2 * A / ab, sqrt(abs(pow(ac, 2) - pow(2 * A / ab, 2)))));
                 }
-                if(abs(2 * A / ab)== abs(2 * A / ab)) //ignore nan
-                flatness += abs(2 * A / ab);
+                if (abs(2 * A / ab) == abs(2 * A / ab)) //ignore nan
+                    flatness += abs(2 * A / ab);
 
             }
             flat[n - 1].push_back(flatness / sides_2[k].size());
@@ -692,7 +765,7 @@ int main() {
                 for (auto const& float1 : flat[n - 1]) {
                     output_file0 << float1 << std::endl;
                 }
-                
+
             }
         }
         status(step, "Claculated normal diviation");
@@ -704,20 +777,27 @@ int main() {
                 output_file32.open("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\1_normalDiviation_" + std::to_string(k) + ".txt");
             }
             float smallest0 = 0;
+            int counterr = 0;
             for (int i = 0; i < normal_diviation[k].size(); i++) {
                 float smallest1 = INT_MAX;
                 int place{};
                 for (int m = 0; m < normal_diviation[k].size(); m++) {
                     if (smallest1 > normal_diviation[k][m].y && smallest0 < normal_diviation[k][m].y) {
-                        //sorted_diviation[k].push_back(normal_diviation[k][m]);
+
                         smallest1 = normal_diviation[k][m].y;
                         place = m;
                     }
                 }
-                sorted_diviation[k].push_back(normal_diviation[k][place]);
-                smallest0 = normal_diviation[k][place].y;
-                if (write) {
-                    output_file32 << normal_diviation[k][place].x << " " << normal_diviation[k][place].y << std::endl;
+                if (i == 0)
+                    sorted_diviation[k].push_back(normal_diviation[k][place]);
+
+                if (sorted_diviation[k][counterr].y <= normal_diviation[k][place].y && i != 0) {
+                    ++counterr;
+                    sorted_diviation[k].push_back(normal_diviation[k][place]);
+                    smallest0 = normal_diviation[k][place].y;
+                    if (write) {
+                        output_file32 << normal_diviation[k][place].x << " " << normal_diviation[k][place].y << std::endl;
+                    }
                 }
             }
             if (write) {
@@ -726,16 +806,22 @@ int main() {
         }
 
         status(step, "Sorted the normal diviation");
-
+        /*
         cv::resize(img_with_points2, resized_img, cv::Size((194 * 3), (259 * 3)));
         cv::imshow("Image", resized_img);
-        cv::waitKey(50);
+        cv::waitKey(50);*/
         status(step, "displayed vector sides_2");
+        for (int i = 0; i < 4; i++) {
+            cv::Mat imge(1944, 2592, CV_8UC3, cv::Scalar(0, 0, 0));
+            for (int j = 0; j < sorted_diviation[i].size(); j++)
+                cv::circle(imge, cv::Point2f(sorted_diviation[i][j].x + 600, sorted_diviation[i][j].y + 600), 1, cv::Scalar(255, 255, 255), -1);
+            cv::resize(imge, imge, cv::Size((194 * 3), (259 * 3)));
+            cv::imshow("Image", imge);
+            cv::waitKey(300);
+            status(step, "displayed vector sorted_diviation" + std::to_string(i));
+        }
 
 
-       // masterCorner.push_back(reformed_corners);
-       // master_sorted_diviation.push_back(sorted_diviation);
-       // master_white_pixels.push_back(white_pixels);
         if (state == "w") {
             for (int k = 0; k < 4; k++) {
                 std::ofstream output_file0;
@@ -768,127 +854,28 @@ int main() {
         cout << "________________________________________________________________________________________________" << std::endl;
     }
 
-     /*  if (state == "w") {
-        cv::FileStorage fs1("flat.xml", cv::FileStorage::WRITE);
-        fs1 << "data" << "[";
-        for (int i = 0; i < flat.size(); ++i)
-        {
-            // Write each vector
-            fs1 << "[:";
-            for (int j = 0; j < flat[i].size(); ++j)
-            {
-                // Write each point
-                fs1 << "[:" << flat[i][j] << "]";
-            }
-            fs1 << "]"; // close vector
-        }
-        fs1 << "]"; // close data
-        fs1.release();
-        cv::FileStorage fs2("masterCorner.xml", cv::FileStorage::WRITE);
-        fs2 << "data" << "[";
-        for (int i = 0; i < masterCorner.size(); ++i)
-        {
-            // Write each vector
-            fs2 << "[:";
-            for (int j = 0; j < masterCorner[i].size(); ++j)
-            {
-                // Write each point
-                fs2 << "[:" << masterCorner[i][j].x << masterCorner[i][j].y << "]";
-            }
-            fs2 << "]"; // close vector
-        }
-        fs2 << "]"; // close data
-        fs2.release();
-        cv::FileStorage fs3("master_white_pixels.xml", cv::FileStorage::WRITE);
-        fs3 << "data" << "[";
-        for (int i = 0; i < master_white_pixels.size(); ++i)
-        {
-            // Write each vector
-            fs3 << "[:";
-            for (int j = 0; j < master_white_pixels[i].size(); ++j)
-            {
-                // Write each point
-                fs3 << "[:" << master_white_pixels[i][j].x << master_white_pixels[i][j].y << "]";
-            }
-            fs3 << "]"; // close vector
-        }
-        fs3 << "]"; // close data
-        fs3.release();
-        cv::FileStorage fs4("master_sorted_diviation.xml", cv::FileStorage::WRITE);
-        fs4 << "data" << "[";
-        for (int i = 0; i < master_sorted_diviation.size(); ++i)
-        {
-            std::cout << "------" << std::endl;
-            // Write each vector
-            fs4 << "[:";
-            for (int j = 0; j < master_sorted_diviation[i].size(); ++j)
-            {
-                // Write each point
-                fs4 << "[:";
-                for (int k = 0; j < master_sorted_diviation[i][j].size(); ++k)
-                {
-                    // Write each point
-                    fs4 << "[:" << master_sorted_diviation[i][j][k].x << master_sorted_diviation[i][j][k].y << "]";
-                }
-                fs4 << "]";
-            }
-            fs4 << "]"; // close vector
-        }
-        fs4 << "]"; // close data
-        fs4.release();
-
-        cv::FileStorage fs("masterCorner.xml", cv::FileStorage::READ);
-
-        cv::FileNode data = fs["data"];
-        for (cv::FileNodeIterator itData = data.begin(); itData != data.end(); ++itData)
-        {
-            // Read each vector
-            std::vector<cv::Point2f> vv;
-
-            cv::FileNode pts = *itData;
-            for (cv::FileNodeIterator itPts = pts.begin(); itPts != pts.end(); ++itPts)
-            {
-                // Read each point
-                cv::FileNode pt = *itPts;
-
-                cv::Point2f point;
-                cv::FileNodeIterator itPt = pt.begin();
-                point.x = *itPt; ++itPt;
-                point.y = *itPt;
-
-                vv.push_back(point);
-            }
-            masterCorner.push_back(vv);
-        }
-        
-    */
-
-    
     if (state == "r") {
-      //  status(step, std::to_string(masterCorner.size()));
-      //  status(step, std::to_string(master_sorted_diviation.size()));
-      //  status(step, std::to_string(master_white_pixels.size()));
-      //  status(step, std::to_string(flat.size()));
+
         for (int l = 1; l < 71; l++) {
             masterCorner.push_back(read_vector("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "reformed_corners.txt"));
-           // status(step, "Read file----C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "reformed_corners.txt");
+            // status(step, "Read file----C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "reformed_corners.txt");
             std::vector<std::vector<cv::Point2f>>sorted_diviation;
             for (int k = 0; k < 4; k++) {
                 sorted_diviation.push_back(read_vector("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "sorted_diviation" + std::to_string(k) + ".txt"));
-           //     status(step, "Read file----C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "sorted_diviation" + std::to_string(k) + ".txt");
+             //        status(step, "Read file----C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "sorted_diviation" + std::to_string(k) + ".txt");
             }
             master_sorted_diviation.push_back(sorted_diviation);
             master_white_pixels.push_back(read_vector("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "white_pixels.txt"));
-           // status(step, "Read file----C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "white_pixels.txt");
+            //  status(step, "Read file----C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "white_pixels.txt");
             flat[l - 1] = read_float("C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "flat.txt");
-           // status(step, "Read file----C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "flat.txt");
-            status(step, std::to_string(l));
+            //  status(step, "Read file----C:\\Users\\a\\source\\repos\\jigsaw_solver\\Test_Image\\" + std::to_string(l) + "flat.txt");
+              status(step, std::to_string(l));
         }
-        status(step, std::to_string(masterCorner.size()));
-        status(step, std::to_string(master_sorted_diviation.size()));
-        status(step, std::to_string(master_sorted_diviation[0].size()));
-        status(step, std::to_string(master_white_pixels.size()));
-        status(step, std::to_string(flat.size()));
+        // status(step, std::to_string(masterCorner.size()));
+       //  status(step, std::to_string(master_sorted_diviation.size()));
+        // status(step, std::to_string(master_sorted_diviation[0].size()));
+        // status(step, std::to_string(master_white_pixels.size()));
+       //  status(step, std::to_string(flat.size()));
         status(step, "started sort");
         int start = 0;
         bool flat_piece[70][4];
@@ -899,122 +886,188 @@ int main() {
                 if (flat_piece[n][k]) {
                     count++;
                 }
-                //std::cout << n << "\t " << count << "\r";
-                //status(step, "is it flat");
             }
             if (count == 2) {
                 start = n;
             }
+            // std::cout << n << " " << count << "\n";
         }
         status(step, "Calculated flat");
 
-        int array[10][7][5];
+        int array[5][10][7][5];
+        for (int i = 0; i < 5; i++) {
+            for (int x = 0; x < 10; x++) {
+                for (int y = 0; y < 7; y++) {
+                    array[i][x][y][4] = -1;
+                }
+            }
+        }
 
-        array[0][0][4] = start;
+        array[0][0][0][4] = start;
         for (int offset = 0, state = 0; state != 1 && offset < 4; offset++) {
-            std::cout << std::to_string(flat_piece[start][(0 + offset) % 4]) <<"|"<< std::to_string(flat_piece[start][(1 + offset) % 4]) << "\n";
-            if (flat_piece[start][(0 + offset) % 4] && flat_piece[start][(1 + offset) % 4] && state != 1){
-            array[0][0][0] = (0 + offset) % 4;
-            std::cout << array[0][0][0] << "\n";
-            array[0][0][1] = (1 + offset) % 4;
-            std::cout << array[0][0][1] << "\n";
-            array[0][0][2] = (2 + offset) % 4;
-            std::cout << array[0][0][2] << "\n";
-            array[0][0][3] = (3 + offset) % 4;
-            std::cout << array[0][0][3] << "\n";
-            state = 1;
+            if (flat_piece[start][(0 + offset) % 4] && flat_piece[start][(1 + offset) % 4] && state != 1) {
+                array[0][0][0][0] = (0 + offset) % 4;
+                array[0][0][0][1] = (1 + offset) % 4;
+                array[0][0][0][2] = (2 + offset) % 4;
+                array[0][0][0][3] = (3 + offset) % 4;
+                state = 1;
             }
         }
         status(step, "Found first piece");
-        int sample_size = 70;
-        std::vector<int> used;
-        for (int y = 0; y < 7; y++) {
-            int x = 0;
-            std::cout <<"----"<< array[x][y][4] << "\n";
-            used.push_back(array[x][y][4]);
+        const int sample_size = 5;
 
-            std::vector<std::vector<int>> match = findBestMatch(master_sorted_diviation, array[x][y][4], array[x][y][2], sample_size, flat_piece,used);
-            std::cout << "1" << "\n";
-            if (x == 0) {
-                std::cout << "11" << "\n";
-                std::cout << "y=" <<y<< "\n";
-                if (y == 6) { 
-                    for (int counter = 0, state = 1; counter < sample_size && state != 0; counter++) {
-                        if (flat_piece[match[counter][0]][(match[counter][1] - 1) % 4] && flat_piece[match[counter][0]][(match[counter][1] - 2) % 4]) {
-                            std::cout << "10" << "\n";
-                            array[x % 10][y+1][4] = match[counter][0];
-                            std::cout << match[counter][0] << "\n";
-                            array[x % 10][y+1][0] = (match[counter][1] - 1) % 4;
-                            std::cout << (match[counter][1] - 1) % 4 << "\n";
-                            array[x % 10][y+1][1] = (match[counter][1] + 0) % 4;
-                            std::cout << (match[counter][1] + 0) % 4 << "\n";
-                            array[x % 10][y+1][2] = (match[counter][1] + 1) % 4;
-                            std::cout << (match[counter][1] + 1) % 4 << "\n";
-                            array[x % 10][y+1][3] = (match[counter][1] + 2) % 4;
-                            std::cout << (match[counter][1] + 2) % 4 << "\n";
-                            state = 0;
+        std::vector<int> used{ 0 };
+        int width = 10;//puzzle width
+        int hight = 7;//puzzle hight
+        /*
+        for (int x = 0; x < (width - 1); x++) {
+            for (int y = 0; y < (hight - 1); y++) {
+                if (array[0][x][y + 1][4] == -1) {
+                    std::vector< std::vector < int >> match_x = findBestMatch(master_sorted_diviation, array[0][x][y][4], array[0][x][y][3], sample_size, flat_piece, used);
+                    std::vector< std::vector < int >> match_y = findBestMatch(master_sorted_diviation, array[0][x][y][4], array[0][x][y][2], sample_size, flat_piece, used);
+                    status(step, "step0");
+                    for (int i = 0; i < sample_size; i++) {
+                    
+                       // std::cout << match_x.size() << std::endl;
+                       // std::cout << "_______________" << std::endl;
+                       // std::cout << match_x[0].size() << std::endl;
+                       // std::cout << match_x[1].size() << std::endl;
+                       // std::cout << match_x[2].size() << std::endl;
+                        //std::cout << match_x[3].size() << std::endl;
+                        //std::cout << match_x[4].size() << std::endl;
+                        
+                        array[i][x + 1][y][4] = match_x[sample_size - (1 + i)][0];
+                       // std::cout << 2 << std::endl;
+                        for (int offset = 0; offset < 4; offset++) {
+                            array[i][x + 1][y][(offset + 1) % 4] = (offset + match_x[sample_size - 1 - i][1]) % 4;
+                         //   std::cout << 3 << std::endl;
+                        } 
+                        std::cout << array[i][x + 1][y][0] << std::endl;
+                    }
+                   
+                    status(step, "step1");
+                    for (int i = 0; i < sample_size; i++) {
+                        array[i][x][y + 1][4] = match_y[sample_size - 1 - i][0];
+                        for (int offset = 0; offset < 4; offset++) {
+                            array[i][x][y + 1][(offset + 0) % 4] = (offset + match_y[sample_size - 1 - i][1]) % 4;
                         }
                     }
-                }
-                else {
-                    for (int counter = 0, state = 1; counter <sample_size && state != 0; counter++) {
-                        std::cout << "-----" << "\n";
-                        std::cout << match[counter][0] << "\n";
-                        std::cout << match[counter][1] << "\n";
-                        std::cout << flat_piece[match[counter][0]][(match[counter][1] - 1) % 4] << "\n";
-                        if (flat_piece[match[counter][0]][(match[counter][1] - 1) % 4]) {
-                            std::cout << "12" << "\n";
-                            array[x % 10][y+1][4] = match[counter][0];
-                            std::cout << match[counter][0] << "\n";
-                            array[x % 10][y+1][0] = (match[counter][1] - 1) % 4;
-                            std::cout << (match[counter][1] - 1) % 4 << "\n";
-                            array[x % 10][y+1][1] = (match[counter][1] + 0) % 4;
-                            std::cout << (match[counter][1] + 0) % 4 << "\n";
-                            array[x % 10][y+1][2] = (match[counter][1] + 1) % 4;
-                            std::cout << (match[counter][1] + 1) % 4 << "\n";
-                            array[x % 10][y+1][3] = (match[counter][1] + 2) % 4;
-                            std::cout << (match[counter][1] + 2) % 4 << "\n";
-                            state = 0;
+                    status(step, "step2");
+
+                    //conditons
+                    if (x == 0) {
+                        for (int i = 0; i < sample_size; i++) {
+                            if (array[i][x][y + 1][4] != -1) {
+                                if (!flat_piece[array[i][x][y + 1][4]][array[i][x][y + 1][1]]) {
+                                    array[i][x][y + 1][4] = -1;
+                                }
+                            }
+                        }
+                    }
+                    status(step, "step3");
+                    if (y == 0) {
+                        for (int i = 0; i < sample_size; i++) {
+                            if (array[i][x + 1][y][4] != -1) {
+                                if (!flat_piece[array[i][x + 1][y][4]][array[i][x + 1][y][0]]) {
+                                    array[i][x + 1][y][4] = -1;
+                                }
+                            }
+                        }
+                    }
+                    status(step, "step4");
+                    if (x == width - 1) {
+                        for (int i = 0; i < sample_size; i++) {
+                            if (array[i][x][y + 1][4] != -1) {
+                                if (!flat_piece[array[i][x][y + 1][4]][array[i][x][y + 1][3]]) {
+                                    array[i][x][y + 1][4] = -1;
+                                }
+                            }
+                        }
+                    }
+                    if (y == hight - 1) {
+                        for (int i = 0; i < sample_size; i++) {
+                            if (array[i][x + 1][y][4] != -1) {
+                                if (!flat_piece[array[i][x + 1][y][4]][array[i][x + 1][y][2]]) {
+                                    array[i][x + 1][y][4] = -1;
+                                }
+                            }
+                        }
+                    }
+                    bool condition[sample_size][sample_size];
+                    for (int i = 0; i < sample_size; i++) {
+                        for (int j = 0; j < sample_size; j++) {
+                            if (array[i][x + 1][y][4] != -1 && array[j][x][y + 1][4] != -1) {
+                                std::vector< std::vector < int >> match_x_1 = findBestMatch(master_sorted_diviation, array[i][x + 1][y][4], array[i][x + 1][y][2], sample_size, flat_piece, used);
+                                std::vector< std::vector < int >> match_y_1 = findBestMatch(master_sorted_diviation, array[j][x][y + 1][4], array[j][x][y + 1][3], sample_size, flat_piece, used);
+
+                                for (int i_1 = 0; i_1 < sample_size; i_1++) {
+                                    for (int j_1 = 0; j_1 < sample_size; j_1++) {
+                                        if (match_x_1[i_1][0] == match_y_1[j_1][0] && match_x_1[i_1][1] == (match_y_1[j_1][0] + 1) % 4) {
+                                            condition[i][j] = true;
+                                            array[i][x + 1][y + 1][4] = match_x_1[i_1][0];
+                                            for (int offset = 0; offset < 4; offset++) {
+                                                array[i][x + 1][y + 1][(offset + 1) % 4] = (offset + match_x_1[sample_size - 1 - i][1]) % 4;
+                                            }
+                                        }
+                                        else {
+                                            condition[i][j] = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for (int i = 0; i < sample_size; i++) {
+                        bool k = false;
+                        for (int j = 0; j < sample_size; j++) {
+                            k = condition[i][j] || k;
+                        }
+                        if (!k) {
+                            array[i][x + 1][y][4] = -1;
+                        }
+                    }
+
+                    for (int i = 0; i < sample_size; i++) {
+                        bool k = false;
+                        for (int j = 0; j < sample_size; j++) {
+                            k = condition[j][i] || k;
+                        }
+                        if (!k) {
+                            array[i][x][y + 1][4] = -1;
+                        }
+                    }
+                    for (int x1 = 0; x1 < width; x1++) {
+                        for (int y1 = 0; y1 < hight; y1++) {
+                            for (int k = 0; k < 5; k++) {
+                                for (int i = 0; i < sample_size; i++) {
+                                    if (array[i][x1][y1][4] < 0) {
+                                        int c = 0;
+                                        for (int j = 0; j < sample_size; j++) {
+                                            if (array[j][x1][y1][4] > 0) {
+                                                c = j;
+                                                break;
+                                            }
+                                        }
+                                        array[i][x1][y1][k] = array[c][x1][y1][k];
+                                        array[c][x1][y1][4] = -1;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-        std::cout << "13" << "\n";
-        for (int x = 0; x < 10; x++) {
-            int y = 0;
-            std::vector<std::vector<int>> match = findBestMatch(master_sorted_diviation, array[x][y][4], array[x][y][3], sample_size, flat_piece,used);
-            if (y == 0) {
-                if (x == 9) {
-                    for (int counter = sample_size - 1, state = 1; counter >= 0 && state != 0; counter--) {
-                        if (flat_piece[match[counter][0]][(match[counter][1] + 1) % 4] && flat_piece[match[counter][0]][(match[counter][1] - 2) % 4]) {
-                            array[(x + 1) % 10][y + (x / 10)][5] = match[counter][0];
-                            array[(x + 1) % 10][y + (x / 10)][0] = (match[counter][1] - 1) % 4;
-                            array[(x + 1) % 10][y + (x / 10)][1] = (match[counter][1] + 0) % 4;
-                            array[(x + 1) % 10][y + (x / 10)][2] = (match[counter][1] + 1) % 4;
-                            array[(x + 1) % 10][y + (x / 10)][3] = (match[counter][1] + 2) % 4;
-                            state = 0;
-                        }
-                    }
-                }
-                else {
-                    for (int counter = sample_size - 1, state = 1; counter >= 0 && state != 0; counter--) {
-                        if (flat_piece[match[counter][0]][(match[counter][1] + 1) % 4]) {
-                            array[(x + 1) % 10][y + (x / 10)][5] = match[counter][0];
-                            array[(x + 1) % 10][y + (x / 10)][0] = (match[counter][1] - 1) % 4;
-                            array[(x + 1) % 10][y + (x / 10)][1] = (match[counter][1] + 0) % 4;
-                            array[(x + 1) % 10][y + (x / 10)][2] = (match[counter][1] + 1) % 4;
-                            array[(x + 1) % 10][y + (x / 10)][3] = (match[counter][1] + 2) % 4;
-                            state = 0;
-                        }
-                    }
-                }
-            }
-        }
-        status(step, "Sorted");
-        gridDisplay(master_white_pixels, array);
-        status(step, "Displayed");
+        }*/
+        status(step, "Found puzzle solution");
+         std::vector< std::vector < int >> match = findBestMatch(master_sorted_diviation, 62, 2, sample_size, flat_piece, used);
+          status(step, "Found match");
+          for (int q =0; q < sample_size; q++) {
+              std::cout << "Match rank:" << q+1 << "\t Piece:" << match[q][0] << "\t Side:" << match[q][1]<<"\n";
+          }
+
+       // gridDisplay(master_white_pixels, array[0]);
+       // status(step, "Displayed");
 
     }
-  return 0;
+    return 0;
 }
